@@ -1,0 +1,37 @@
+name: React Native Android Build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+  jobs:
+     build:
+       runs-on: windows-latest
+
+       steps:
+         - name: Checkout repository
+           uses: actions/checkout@v4
+
+         - name: Set Node
+           uses: actions/setup-node@v4
+           with:
+              node-version: 24
+         - name: Install dependencies
+           run: npm ci
+         - name: setup JDK
+           uses: actions/setup-java@v4
+           with:
+             distribution: 'temurin'
+             java-version: '17'
+         - name: Build Android APk
+           run: |
+              cd Android
+              gradlew.bat assembleRelease
+           shell: bash
+         - name: Upload APK artifact
+           uses: actions/upload-artifact@v4
+           with:
+             name: app-release
+             path: Android\app\build\outputs\apk\release\app-release.apk
