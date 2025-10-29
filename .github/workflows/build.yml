@@ -24,11 +24,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Install Expo CLI
+      - name: Install EAS CLI
         run: npm install -g eas-cli
 
-      - name: Configure Expo token
-        run: eas whoami
+      - name: Configure Expo token for CI
+        run: eas login --token $EXPO_TOKEN
 
       - name: Build Android APK
         run: eas build --platform android --profile preview --non-interactive
@@ -38,4 +38,3 @@ jobs:
         with:
           name: app-release
           path: '**/*.apk'
-
