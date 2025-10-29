@@ -27,8 +27,9 @@ jobs:
       - name: Install EAS CLI
         run: npm install -g eas-cli
 
-      - name: Configure Expo token for CI
-        run: eas login --token $EXPO_TOKEN
+      # No login step needed; EXPO_TOKEN is automatically used
+      - name: Verify Expo token
+        run: eas whoami
 
       - name: Build Android APK
         run: eas build --platform android --profile preview --non-interactive
