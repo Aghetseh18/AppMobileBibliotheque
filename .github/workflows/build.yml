@@ -1,4 +1,4 @@
-name: React Native Android Build
+name: Expo Android CI
 
 on:
   push:
@@ -8,29 +8,42 @@ on:
 
 jobs:
   build:
-    runs-on: windows-latest
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+    runs-on: ubuntu-latest
 
-    - name: Set Node
-      uses: actions/setup-node@v4
-      with:
-        node-version: 24
-    - name: Install dependencies
-      run: npm ci
-    - name: setup JDK
-      uses: actions/setup-java@v4
-      with:
-        distribution: 'temurin'
-        java-version: '17'
-    - name: Build Android APk
-      run: |
-        cd android
-        gradlew.bat assembleRelease
-      shell: bash
-    - name: Upload APK artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: app-release
-        path: Android\app\build\outputs\apk\release\app-release.apk
+    steps:
+      # 1️⃣ Checkout repository
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2️⃣ Setup Node.js
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # 3️⃣ Install dependencies
+      - name: Install npm dependencies
+        run: npm ci
+
+      # 4️⃣ Setup Expo CLI
+      - name: Install Expo CLI
+        run: npm install -g expo-cli
+
+      # 5️⃣ Login to Expo
+      - name: Expo login
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: expo whoami || echo "Already logged in"
+
+      # 6️⃣ Build Android APK
+      - name: Build Android APK
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: expo build:android -t apk --non-interactive
+
+      # 7️⃣ Upload APK artifact
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release
+          path: $(find . -type f -name "*.apk" | head -n 1)
