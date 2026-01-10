@@ -2,7 +2,7 @@ import { View, Text, SafeAreaView, Image, TouchableOpacity, StyleSheet, Dimensio
 import React, { useState } from 'react'
 import WebView from 'react-native-webview'
 import { useNavigation } from '@react-navigation/native';
-import Ionicons from 'react-native-vector-icons/Ionicons'
+import { Ionicons } from '@expo/vector-icons'
 
 const WIDTH = Dimensions.get('window').width;
 const HEIGHT = Dimensions.get('window').height;
@@ -23,14 +23,14 @@ const PageWeb2 = () => {
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.header}>
-                <TouchableOpacity 
+                <TouchableOpacity
                     style={styles.backButton}
                     onPress={() => navigation.goBack()}
                 >
                     <Ionicons name="arrow-back" size={24} color="#007AFF" />
                 </TouchableOpacity>
 
-                <TouchableOpacity 
+                <TouchableOpacity
                     style={styles.browserBackButton}
                     onPress={webViewgoback}
                 >
@@ -45,7 +45,7 @@ const PageWeb2 = () => {
             <View style={styles.webViewContainer}>
                 <WebView
                     ref={webviewRef}
-                    source={{uri: "https://www.google.cm"}}
+                    source={{ uri: "https://www.google.cm" }}
                     startInLoadingState={true}
                     onNavigationStateChange={handleNavigationStateChange}
                     renderLoading={() => (

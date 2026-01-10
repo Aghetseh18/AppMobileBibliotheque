@@ -1,7 +1,7 @@
 import { View, Text, Image, TouchableOpacity, Dimensions, TextInput, StyleSheet, Button, Pressable } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import { Ionicons } from '@expo/vector-icons';
 import { db, storage } from '../../config'
 import * as ImagePicker from 'expo-image-picker'
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage"
@@ -13,20 +13,20 @@ const WIDTH = Dimensions.get('screen').width
 const HEIGHT = Dimensions.get('screen').height
 
 const Parametre2 = (props) => {
-  const {imageM,nameM,emailM,telM,departM,niveauM}=props.route.params
-  const [name,setname]=useState(nameM || "")
-  const [tel,settel]=useState(telM || '')
-  const [niveau,setniveau]=useState(niveauM || '')
-  const [depart,setdepart]=useState(departM || '')
-  const [imageUser,setImageUser]=useState(imageM || '')
-  const [changeImage,setChangeImage]=useState(false)
+  const { imageM, nameM, emailM, telM, departM, niveauM } = props.route.params
+  const [name, setname] = useState(nameM || "")
+  const [tel, settel] = useState(telM || '')
+  const [niveau, setniveau] = useState(niveauM || '')
+  const [depart, setdepart] = useState(departM || '')
+  const [imageUser, setImageUser] = useState(imageM || '')
+  const [changeImage, setChangeImage] = useState(false)
   const [visible, setVisible] = useState(false)
   const [termine, setTerminer] = useState(false)
   const [uploading, setUploading] = useState(false)
-  const [image2, setImage2]=useState(null)
+  const [image2, setImage2] = useState(null)
 
-  useEffect(()=>{
-    (async ()=>{
+  useEffect(() => {
+    (async () => {
       const gallerieStatus = await ImagePicker.requestMediaLibraryPermissionsAsync()
       if (gallerieStatus.status !== 'granted') {
         alert('Désolé, nous avons besoin des permissions pour accéder à la galerie!');
@@ -34,7 +34,7 @@ const Parametre2 = (props) => {
     })()
   }, [])
 
-  const pickImage = async () =>{
+  const pickImage = async () => {
     try {
       let result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -43,7 +43,7 @@ const Parametre2 = (props) => {
         quality: 0.5
       });
 
-      if(!result.canceled && result.assets[0]){
+      if (!result.canceled && result.assets[0]) {
         setImage2(result.assets[0].uri)
         setChangeImage(true)
       }
@@ -55,7 +55,7 @@ const Parametre2 = (props) => {
 
   async function uploadImage(imageUri) {
     if (!imageUri) return null;
-    
+
     try {
       const response = await fetch(imageUri)
       const blobFile = await response.blob()
@@ -73,7 +73,7 @@ const Parametre2 = (props) => {
     try {
       setUploading(true)
       let imageUrl = imageUser
-      
+
       if (changeImage && image2) {
         const newImageUrl = await uploadImage(image2)
         if (newImageUrl) {
@@ -101,46 +101,46 @@ const Parametre2 = (props) => {
     }
   }
 
-  function modifnAME(val){
+  function modifnAME(val) {
     setTerminer(true)
     setname(val)
   }
 
-  function modifNivo(val){
+  function modifNivo(val) {
     setTerminer(true)
     setniveau(val)
   }
 
-  function modifTel(val){
+  function modifTel(val) {
     setTerminer(true)
     settel(val)
   }
 
-  function modifDepart(val){
+  function modifDepart(val) {
     setTerminer(true)
     setdepart(val)
   }
 
   return (
     <KeyboardAwareScrollView>
-      { termine ? 
-        <View style={{flexDirection:'row',justifyContent:'space-between',margin:10,marginLeft:10,marginRight:10}}>
-          <TouchableOpacity onPress={()=>props.navigation.goBack()}>
-            <Text style={{fontWeight:'500',fontSize:13,color:'#DC143C',marginLeft:15}}>Annuler</Text>
+      {termine ?
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', margin: 10, marginLeft: 10, marginRight: 10 }}>
+          <TouchableOpacity onPress={() => props.navigation.goBack()}>
+            <Text style={{ fontWeight: '500', fontSize: 13, color: '#DC143C', marginLeft: 15 }}>Annuler</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={() => setVisible(true)} disabled={uploading}>
-            <Text style={{fontWeight:'700',fontSize:13,color:'#1E90FF',marginRight:15}}>
+            <Text style={{ fontWeight: '700', fontSize: 13, color: '#1E90FF', marginRight: 15 }}>
               {uploading ? 'Mise à jour...' : 'Terminer'}
             </Text>
           </TouchableOpacity>
-        </View> 
-        : null 
+        </View>
+        : null
       }
 
       <View>
-        <View style={{flexDirection:'column',width:WIDTH*0.98,margin:10,backgroundColor:'#DCDCDC',borderRadius:20,marginLeft:5,padding:10,elevation:10}}>
-          <View style={{flexDirection:'row'}}>
-            <TouchableOpacity 
+        <View style={{ flexDirection: 'column', width: WIDTH * 0.98, margin: 10, backgroundColor: '#DCDCDC', borderRadius: 20, marginLeft: 5, padding: 10, elevation: 10 }}>
+          <View style={{ flexDirection: 'row' }}>
+            <TouchableOpacity
               onPress={pickImage}
               style={{
                 height: 100,
@@ -152,14 +152,14 @@ const Parametre2 = (props) => {
               }}
             >
               {(changeImage && image2) || imageUser ? (
-                <Image 
+                <Image
                   style={{
                     height: 100,
                     width: 100,
                     borderRadius: 50,
                     alignSelf: 'center'
-                  }} 
-                  source={{uri: changeImage ? image2 : imageUser}} 
+                  }}
+                  source={{ uri: changeImage ? image2 : imageUser }}
                 />
               ) : null}
               <View style={{
@@ -178,25 +178,25 @@ const Parametre2 = (props) => {
                 <Ionicons name="camera" size={20} color="#fff" />
               </View>
             </TouchableOpacity>
-            <View style={{margin:10}}>
-              <Text style={{flexWrap:'wrap',marginTop:20,fontSize:15}}>Saisissez votre nom et ajoutez une photo</Text>
+            <View style={{ margin: 10 }}>
+              <Text style={{ flexWrap: 'wrap', marginTop: 20, fontSize: 15 }}>Saisissez votre nom et ajoutez une photo</Text>
               <Text>de profil (Optionnelle)</Text>
             </View>
           </View>
 
-          <View style={{height:1,width:WIDTH*0.9,alignSelf:'center',backgroundColor:'#fff',marginTop:10}}></View>
-          <TextInput 
+          <View style={{ height: 1, width: WIDTH * 0.9, alignSelf: 'center', backgroundColor: '#fff', marginTop: 10 }}></View>
+          <TextInput
             placeholder={nameM || "Votre nom"}
             value={name}
             onChangeText={modifnAME}
             style={styles.input}
           />
-          <View style={{height:1,width:WIDTH*0.9,alignSelf:'center',backgroundColor:'#fff',marginTop:4}}></View>
+          <View style={{ height: 1, width: WIDTH * 0.9, alignSelf: 'center', backgroundColor: '#fff', marginTop: 4 }}></View>
         </View>
 
-        <Text style={{fontSize:12,marginTop:15,marginLeft:20}}>DEPARTEMENT</Text>
-        <View style={{flexDirection:'column',width:WIDTH*0.98,margin:10,backgroundColor:'#DCDCDC',borderRadius:20,marginLeft:5,padding:10}}>
-          <TextInput 
+        <Text style={{ fontSize: 12, marginTop: 15, marginLeft: 20 }}>DEPARTEMENT</Text>
+        <View style={{ flexDirection: 'column', width: WIDTH * 0.98, margin: 10, backgroundColor: '#DCDCDC', borderRadius: 20, marginLeft: 5, padding: 10 }}>
+          <TextInput
             placeholder={departM || "Votre département"}
             value={depart}
             onChangeText={modifDepart}
@@ -204,9 +204,9 @@ const Parametre2 = (props) => {
           />
         </View>
 
-        <Text style={{fontSize:12,marginTop:15,marginLeft:20}}>NIVEAU</Text>
-        <View style={{flexDirection:'column',width:WIDTH*0.98,margin:10,backgroundColor:'#DCDCDC',borderRadius:20,marginLeft:5,padding:10}}>
-          <TextInput 
+        <Text style={{ fontSize: 12, marginTop: 15, marginLeft: 20 }}>NIVEAU</Text>
+        <View style={{ flexDirection: 'column', width: WIDTH * 0.98, margin: 10, backgroundColor: '#DCDCDC', borderRadius: 20, marginLeft: 5, padding: 10 }}>
+          <TextInput
             placeholder={niveauM || "Votre niveau"}
             value={niveau}
             onChangeText={modifNivo}
@@ -214,9 +214,9 @@ const Parametre2 = (props) => {
           />
         </View>
 
-        <Text style={{fontSize:12,marginTop:15,marginLeft:20}}>TELEPHONE</Text>
-        <View style={{flexDirection:'column',width:WIDTH*0.98,margin:10,backgroundColor:'#DCDCDC',borderRadius:20,marginLeft:5,padding:10}}>
-          <TextInput 
+        <Text style={{ fontSize: 12, marginTop: 15, marginLeft: 20 }}>TELEPHONE</Text>
+        <View style={{ flexDirection: 'column', width: WIDTH * 0.98, margin: 10, backgroundColor: '#DCDCDC', borderRadius: 20, marginLeft: 5, padding: 10 }}>
+          <TextInput
             placeholder={telM || "Votre téléphone"}
             value={tel}
             onChangeText={modifTel}
@@ -225,9 +225,9 @@ const Parametre2 = (props) => {
           />
         </View>
 
-        <Text style={{fontSize:12,marginTop:15,marginLeft:20}}>ADRESSE EMAIL</Text>
-        <View style={{flexDirection:'column',width:WIDTH*0.98,margin:10,backgroundColor:'#DCDCDC',borderRadius:20,marginLeft:5,padding:10,elevation:5}}>
-          <Text style={{fontWeight:'700',marginLeft:10,color:'gray'}}>{emailM}</Text>
+        <Text style={{ fontSize: 12, marginTop: 15, marginLeft: 20 }}>ADRESSE EMAIL</Text>
+        <View style={{ flexDirection: 'column', width: WIDTH * 0.98, margin: 10, backgroundColor: '#DCDCDC', borderRadius: 20, marginLeft: 5, padding: 10, elevation: 5 }}>
+          <Text style={{ fontWeight: '700', marginLeft: 10, color: 'gray' }}>{emailM}</Text>
         </View>
       </View>
 

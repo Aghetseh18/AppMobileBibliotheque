@@ -7,6 +7,8 @@ import {
   FlatList,
   TouchableOpacity,
   Image,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import math from '../../assets/biblio/math.jpg';
 import { API_URL } from '../../apiConfig';
@@ -132,6 +134,11 @@ export default function SimilarBooksView() {
   );
 
   return (
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior="padding"
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 16 : 0}
+    >
     <View style={styles.container}>
       <Text style={styles.sectionTitle}>Rechercher des livres similaires</Text>
 
@@ -154,6 +161,7 @@ export default function SimilarBooksView() {
         numColumns={2}
         columnWrapperStyle={styles.row}
         contentContainerStyle={styles.listContainer}
+        keyboardShouldPersistTaps="handled"
         ListEmptyComponent={
           !loading && similarBooks.length === 0 ? (
             <Text style={styles.noResultsText}>Aucun livre trouvé.</Text>
@@ -161,6 +169,7 @@ export default function SimilarBooksView() {
         }
       />
     </View>
+    </KeyboardAvoidingView>
   );
 }
 

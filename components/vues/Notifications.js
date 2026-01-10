@@ -15,7 +15,7 @@ export default function Notifications({ navigation }) {
 
     useEffect(() => {
         fetchNotifications();
-        
+
         // Initialize WebSocket for real-time approval notifications
         if (currentUserNewNav?.email) {
             initializeWebSocket(currentUserNewNav.email);
@@ -76,7 +76,7 @@ export default function Notifications({ navigation }) {
             // Handle approval notifications
             WebSocketService.on('approval', async (data) => {
                 console.log('Approval received:', data);
-                
+
                 // Create approval notification
                 const approvalNotification = {
                     id: `notif_approval_${Date.now()}`,
@@ -95,7 +95,7 @@ export default function Notifications({ navigation }) {
                     await updateDoc(userRef, {
                         notifications: arrayUnion(approvalNotification)
                     });
-                    
+
                     // Show alert to user
                     Alert.alert(
                         'Réservation approuvée ✓',
@@ -190,6 +190,38 @@ export default function Notifications({ navigation }) {
                         } catch (error) {
                             console.error('Erreur lors de la suppression:', error);
                             Alert.alert('Erreur', 'Impossible de supprimer la notification');
+                        }
+                    }
+                }
+            ]
+        );
+    };
+
+    const deleteAllNotifications = async () => {
+        if (!currentUserNewNav?.email || notifications.length === 0) return;
+
+        Alert.alert(
+            'Tout supprimer',
+            'Voulez-vous vraiment supprimer toutes les notifications ?',
+            [
+                { text: 'Annuler', style: 'cancel' },
+                {
+                    text: 'Tout supprimer',
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            setLoading(true);
+                            const userRef = doc(db, 'BiblioUser', currentUserNewNav.email);
+                            // On vide le tableau de notifications
+                            await updateDoc(userRef, {
+                                notifications: []
+                            });
+                            Alert.alert('Succès', 'Toutes les notifications ont été supprimées');
+                        } catch (error) {
+                            console.error('Erreur lors de la suppression de toutes les notifications:', error);
+                            Alert.alert('Erreur', 'Impossible de supprimer les notifications');
+                        } finally {
+                            setLoading(false);
                         }
                     }
                 }
@@ -373,11 +405,18 @@ export default function Notifications({ navigation }) {
                     <Ionicons name="arrow-back" size={24} color="#FF8A50" />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Notifications</Text>
-                {unreadCount > 0 && (
-                    <TouchableOpacity onPress={markAllAsRead} style={styles.markAllButton}>
-                        <Text style={styles.markAllText}>Tout marquer</Text>
-                    </TouchableOpacity>
-                )}
+                <View style={styles.headerActions}>
+                    {unreadCount > 0 && (
+                        <TouchableOpacity onPress={markAllAsRead} style={styles.markAllButton}>
+                            <Text style={styles.markAllText}>Tout marquer</Text>
+                        </TouchableOpacity>
+                    )}
+                    {notifications.length > 0 && (
+                        <TouchableOpacity onPress={deleteAllNotifications} style={styles.deleteAllButton}>
+                            <Ionicons name="trash-outline" size={24} color="#FF3B30" />
+                        </TouchableOpacity>
+                    )}
+                </View>
             </View>
 
             {loading ? (
@@ -418,11 +457,21 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: '600',
         color: '#000000',
+        flex: 1,
+        textAlign: 'center',
+    },
+    headerActions: {
+        flexDirection: 'row',
+        alignItems: 'center',
     },
     backButton: {
         padding: 8,
     },
     markAllButton: {
+        padding: 8,
+        marginRight: 4,
+    },
+    deleteAllButton: {
         padding: 8,
     },
     markAllText: {

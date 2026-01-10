@@ -1,4 +1,4 @@
-import { View, Text, TextInput, StyleSheet, TouchableOpacity } from 'react-native'
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView } from 'react-native'
 import React from 'react'
 
 const FichePaie = () => {
@@ -8,6 +8,12 @@ const FichePaie = () => {
     const [number, onChangeNumber] = React.useState(null);
 
   return (
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior="padding"
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 16 : 0}
+    >
+    <ScrollView contentContainerStyle={{ paddingBottom: 24 }} keyboardShouldPersistTaps="handled">
     <View style={{}}>
       <View style={{flexDirection:'row',justifyContent:'center',backgroundColor:'gray'}}>
         <Text style={{fontWeight:'700', fontSize:35,}}> S H E I N</Text>
@@ -61,6 +67,8 @@ const FichePaie = () => {
         </TouchableOpacity>
 
     </View>
+    </ScrollView>
+    </KeyboardAvoidingView>
   )
 }
 

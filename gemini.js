@@ -5,8 +5,10 @@ import {
     HarmBlockThreshold,
 } from "@google/generative-ai";
 
+import { GEMINI_API_KEY } from "@env";
+
 // REPLACE WITH YOUR NEW API KEY from https://aistudio.google.com/app/apikey
-const apiKey = "AIzaSyBYE_kgoKU3NrebOxcPoIyrh3Y0RcauRZQ";
+const apiKey = GEMINI_API_KEY;
 const genAI = new GoogleGenerativeAI(apiKey);
 
 const model = genAI.getGenerativeModel({
@@ -99,7 +101,7 @@ export async function runLibraryBot(userQuestion, conversationHistory = []) {
 
     // ANALYSER LE CONTEXTE DE LA CONVERSATION
     const userMessageLower = userQuestion.toLowerCase();
-    const isGreeting = userMessageLower.includes('bonjour') ||
+    const isGreeting = userMessageLower.includes - ('bonjour') ||
         userMessageLower.includes('bonsoir') ||
         userMessageLower.includes('salut') ||
         userMessageLower.includes('hello') ||
@@ -143,9 +145,9 @@ INSTRUCTIONS IMPORTANTES :
 
 EXEMPLES DE RÉPONSES :
 ${shouldGreet ?
-        `- Si salutation nécessaire : "${greeting} ! Comment puis-je vous aider ?"` :
-        `- Réponse directe sans salutation : "Bien sûr, je peux vous aider avec..."`
-    }
+            `- Si salutation nécessaire : "${greeting} ! Comment puis-je vous aider ?"` :
+            `- Réponse directe sans salutation : "Bien sûr, je peux vous aider avec..."`
+        }
 
 Question de l'étudiant : ${userQuestion}`;
 

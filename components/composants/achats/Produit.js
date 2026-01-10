@@ -1,4 +1,4 @@
-import { Dimensions, Image, ScrollView, Text, TouchableOpacity, View, Alert, Modal, SafeAreaView, TextInput, StyleSheet, Pressable, ActivityIndicator } from 'react-native';
+import { Dimensions, Image, ScrollView, Text, TouchableOpacity, View, Alert, Modal, SafeAreaView, TextInput, StyleSheet, Pressable, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
 import Swiper from 'react-native-swiper';
 import React, { useContext, useEffect, useState } from 'react';
 import { UserContextNavApp } from '../../navigation/NavApp';
@@ -680,30 +680,36 @@ const Produit = ({ route, navigation }) => {
       </ScrollView>
 
       <Modal animationType="slide" transparent={true} visible={modalComm} onRequestClose={() => setModalComm(false)}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Donner mon avis</Text>
-            <View style={styles.ratingInput}>
-              <Text style={styles.ratingLabel}>Note :</Text>
-              <View style={styles.starRatingContainer}>
-                {[1, 2, 3, 4, 5].map((rating) => (
-                  <TouchableOpacity key={rating} onPress={() => setValuesNote(rating.toString())}>
-                    <Text style={[styles.starRatingIcon, { color: rating <= parseInt(valuesNote) ? '#FFD700' : '#ddd' }]}>★</Text>
-                  </TouchableOpacity>
-                ))}
+        <KeyboardAvoidingView
+          behavior="padding"
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 16 : 0}
+          style={{ flex: 1 }}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Donner mon avis</Text>
+              <View style={styles.ratingInput}>
+                <Text style={styles.ratingLabel}>Note :</Text>
+                <View style={styles.starRatingContainer}>
+                  {[1, 2, 3, 4, 5].map((rating) => (
+                    <TouchableOpacity key={rating} onPress={() => setValuesNote(rating.toString())}>
+                      <Text style={[styles.starRatingIcon, { color: rating <= parseInt(valuesNote) ? '#FFD700' : '#ddd' }]}>★</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+              <TextInput style={styles.commentInput} placeholder="Écrivez votre avis ici..." multiline numberOfLines={4} value={values} onChangeText={setValues} />
+              <View style={styles.modalButtons}>
+                <TouchableOpacity style={[styles.modalButton, styles.cancelButton]} onPress={() => { setModalComm(false); setValues(''); setValuesNote('0'); }}>
+                  <Text style={styles.cancelButtonText}>Annuler</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.modalButton, styles.submitButton]} onPress={handleAddComment}>
+                  <Text style={styles.submitButtonText}>Publier</Text>
+                </TouchableOpacity>
               </View>
             </View>
-            <TextInput style={styles.commentInput} placeholder="Écrivez votre avis ici..." multiline numberOfLines={4} value={values} onChangeText={setValues} />
-            <View style={styles.modalButtons}>
-              <TouchableOpacity style={[styles.modalButton, styles.cancelButton]} onPress={() => { setModalComm(false); setValues(''); setValuesNote('0'); }}>
-                <Text style={styles.cancelButtonText}>Annuler</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.modalButton, styles.submitButton]} onPress={handleAddComment}>
-                <Text style={styles.submitButtonText}>Publier</Text>
-              </TouchableOpacity>
-            </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       <Modal animationType='slide' transparent={true} visible={modalDescription} onRequestClose={() => setModalDescription(false)}>

@@ -1,6 +1,6 @@
 // Créer le fichier EditProfile.js
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Image, Alert } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Image, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '../../config';
@@ -68,6 +68,11 @@ export default function EditProfile({ route, navigation }) {
     };
 
     return (
+        <KeyboardAvoidingView
+            style={styles.container}
+            behavior="padding"
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 16 : 0}
+        >
         <View style={styles.container}>
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
@@ -77,7 +82,11 @@ export default function EditProfile({ route, navigation }) {
                 <View style={{ width: 24 }} />
             </View>
 
-            <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollView}>
+            <ScrollView
+                showsVerticalScrollIndicator={false}
+                style={styles.scrollView}
+                keyboardShouldPersistTaps="handled"
+            >
                 <View style={styles.imageContainer}>
                     <TouchableOpacity onPress={pickImage} style={styles.profileImageContainer}>
                         {imageUri ? (
@@ -161,6 +170,7 @@ export default function EditProfile({ route, navigation }) {
                 </TouchableOpacity>
             </ScrollView>
         </View>
+        </KeyboardAvoidingView>
     );
 }
 

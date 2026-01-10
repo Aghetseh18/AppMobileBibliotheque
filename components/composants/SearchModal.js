@@ -10,11 +10,13 @@ import {
   StyleSheet,
   ActivityIndicator,
   Modal,
-  Dimensions
+  Dimensions,
+  KeyboardAvoidingView,
+  Platform
 } from 'react-native';
 import { collection, query, where, getDocs, limit, doc, updateDoc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../../config';
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import { Ionicons } from '@expo/vector-icons';
 
 const WIDTH = Dimensions.get('window').width;
 const HEIGHT = Dimensions.get('window').height;
@@ -65,7 +67,7 @@ const SearchModal = ({ visible, onClose, navigation }) => {
       try {
         const userRef = doc(db, 'BiblioUser', USER_EMAIL);
         const userDoc = await getDoc(userRef);
-        
+
         if (!userDoc.exists()) {
           console.log('User document does not exist, creating...');
           await setDoc(userRef, {
@@ -152,7 +154,7 @@ const SearchModal = ({ visible, onClose, navigation }) => {
       console.error('Invalid search term:', searchTerm);
       return;
     }
-    
+
     const trimmedTerm = searchTerm.trim();
     if (trimmedTerm === '') {
       console.error('Empty search term after trim');
@@ -183,7 +185,7 @@ const SearchModal = ({ visible, onClose, navigation }) => {
 
       // 4. Préparer le nouveau tableau d'historique
       let currentHistory = Array.isArray(userData.searchHistory) ? userData.searchHistory : [];
-      
+
       // 5. Vérifier si le terme existe déjà
       if (currentHistory.includes(trimmedTerm)) {
         // Si le terme existe, le déplacer au début
@@ -248,85 +250,95 @@ const SearchModal = ({ visible, onClose, navigation }) => {
       visible={visible}
       onRequestClose={handleClose}
     >
-      <SafeAreaView style={styles.modalContainer}>
-        <View style={styles.searchHeader}>
-          <TouchableOpacity
-            onPress={handleClose}
-            style={styles.backButton}
-          >
-            <Ionicons name="arrow-back" size={24} color="black" />
-          </TouchableOpacity>
+      <KeyboardAvoidingView
+        style={styles.modalContainer}
+        behavior="padding"
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 16 : 0}
+      >
+        <SafeAreaView style={styles.modalContainer}>
+          <View style={styles.searchHeader}>
+            <TouchableOpacity
+              onPress={handleClose}
+              style={styles.backButton}
+            >
+              <Ionicons name="arrow-back" size={24} color="black" />
+            </TouchableOpacity>
 
-          <View style={styles.searchInputContainer}>
-            <Ionicons name="search" size={20} color="gray" style={styles.searchIcon} />
-            <TextInput
-              placeholder="Rechercher un livre..."
-              style={styles.searchInput}
-              value={searchQuery}
-              onChangeText={handleSearch}
-              autoFocus={true}
-            />
-            {searchQuery.length > 0 && (
-              <TouchableOpacity
-                onPress={() => setSearchQuery('')}
-                style={styles.clearButton}
-              >
-                <Ionicons name="close-circle" size={20} color="gray" />
-              </TouchableOpacity>
-            )}
-          </View>
-        </View>
-
-        <ScrollView style={styles.resultsContainer}>
-          {isSearching ? (
-            <ActivityIndicator style={styles.loader} size="large" color="#0096F6" />
-          ) : searchQuery.length > 0 ? (
-            <View>
-              {searchResults.map((book, index) => (
+            <View style={styles.searchInputContainer}>
+              <Ionicons name="search" size={20} color="gray" style={styles.searchIcon} />
+              <TextInput
+                placeholder="Rechercher un livre..."
+                style={styles.searchInput}
+                value={searchQuery}
+                onChangeText={handleSearch}
+                autoFocus={true}
+              />
+              {searchQuery.length > 0 && (
                 <TouchableOpacity
-                  key={book.id || index}
-                  style={styles.resultItem}
-                  onPress={() => handleSelectBook(book)}
+                  onPress={() => setSearchQuery('')}
+                  style={styles.clearButton}
                 >
-                  <Image
-                    source={book.image}
-                    style={styles.bookImage}
-                    resizeMode="cover"
-                  />
-                  <View style={styles.bookInfo}>
-                    <Text style={styles.bookTitle}>{book.name}</Text>
-                    <Text style={styles.bookCategory}>{book.cathegorie}</Text>
-                    <Text style={styles.bookAvailability}>
-                      {book.exemplaire > 0 ? `${book.exemplaire} exemplaire(s) disponible(s)` : 'Non disponible'}
-                    </Text>
-                  </View>
+                  <Ionicons name="close-circle" size={20} color="gray" />
                 </TouchableOpacity>
-              ))}
-              {searchResults.length === 0 && (
-                <Text style={styles.noResults}>Aucun livre trouvé</Text>
               )}
             </View>
-          ) : (
-            <View style={styles.recentSearchesContainer}>
-              <Text style={styles.recentTitle}>Recherches récentes</Text>
-              {recentSearches.length > 0 ? (
-                recentSearches.map((search, index) => (
+          </View>
+
+          <ScrollView
+            style={styles.resultsContainer}
+            keyboardShouldPersistTaps="handled"
+            automaticallyAdjustKeyboardInsets
+          >
+            {isSearching ? (
+              <ActivityIndicator style={styles.loader} size="large" color="#0096F6" />
+            ) : searchQuery.length > 0 ? (
+              <View>
+                {searchResults.map((book, index) => (
                   <TouchableOpacity
-                    key={index}
-                    style={styles.recentItem}
-                    onPress={() => handleSearch(search)}
+                    key={book.id || index}
+                    style={styles.resultItem}
+                    onPress={() => handleSelectBook(book)}
                   >
-                    <Ionicons name="time-outline" size={20} color="gray" />
-                    <Text style={styles.recentText}>{search}</Text>
+                    <Image
+                      source={book.image}
+                      style={styles.bookImage}
+                      resizeMode="cover"
+                    />
+                    <View style={styles.bookInfo}>
+                      <Text style={styles.bookTitle}>{book.name}</Text>
+                      <Text style={styles.bookCategory}>{book.cathegorie}</Text>
+                      <Text style={styles.bookAvailability}>
+                        {book.exemplaire > 0 ? `${book.exemplaire} exemplaire(s) disponible(s)` : 'Non disponible'}
+                      </Text>
+                    </View>
                   </TouchableOpacity>
-                ))
-              ) : (
-                <Text style={styles.noResults}>Aucune recherche récente</Text>
-              )}
-            </View>
-          )}
-        </ScrollView>
-      </SafeAreaView>
+                ))}
+                {searchResults.length === 0 && (
+                  <Text style={styles.noResults}>Aucun livre trouvé</Text>
+                )}
+              </View>
+            ) : (
+              <View style={styles.recentSearchesContainer}>
+                <Text style={styles.recentTitle}>Recherches récentes</Text>
+                {recentSearches.length > 0 ? (
+                  recentSearches.map((search, index) => (
+                    <TouchableOpacity
+                      key={index}
+                      style={styles.recentItem}
+                      onPress={() => handleSearch(search)}
+                    >
+                      <Ionicons name="time-outline" size={20} color="gray" />
+                      <Text style={styles.recentText}>{search}</Text>
+                    </TouchableOpacity>
+                  ))
+                ) : (
+                  <Text style={styles.noResults}>Aucune recherche récente</Text>
+                )}
+              </View>
+            )}
+          </ScrollView>
+        </SafeAreaView>
+      </KeyboardAvoidingView>
     </Modal>
   );
 };

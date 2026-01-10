@@ -1,6 +1,6 @@
 // Créer le fichier ChangePassword.js
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { getAuth, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
 
@@ -61,7 +61,11 @@ export default function ChangePassword({ navigation }) {
     };
 
     return (
-        <View style={styles.container}>
+        <KeyboardAvoidingView
+            style={styles.container}
+            behavior="padding"
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 16 : 0}
+        >
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
                     <Ionicons name="arrow-back" size={24} color="#FF8A50" />
@@ -70,7 +74,7 @@ export default function ChangePassword({ navigation }) {
                 <View style={{ width: 24 }} />
             </View>
 
-            <View style={styles.content}>
+            <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
                 <Text style={styles.infoText}>
                     Veuillez saisir votre mot de passe actuel et votre nouveau mot de passe
                 </Text>
@@ -153,8 +157,8 @@ export default function ChangePassword({ navigation }) {
                         {loading ? 'Chargement...' : 'Changer le mot de passe'}
                     </Text>
                 </TouchableOpacity>
-            </View>
-        </View>
+            </ScrollView>
+        </KeyboardAvoidingView>
     );
 }
 

@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import { MaterialIcons as Icon } from '@expo/vector-icons';
 
 const WIDTH = Dimensions.get('window').width;
 
@@ -13,46 +13,46 @@ const MessageBubble = ({ message, time, isReceived, isLast, isRead }) => {
   ];
 
   const bubbleContent = (
-      <>
-        <Text style={[styles.messageText, isReceived ? styles.receivedText : styles.sentText]}>
-          {message}
-        </Text>
-        <Text style={[styles.timeText, isReceived ? styles.receivedTime : styles.sentTime]}>
-          {time}
-        </Text>
-        {!isReceived && (
-            <View style={styles.readReceipt}>
-              <Icon
-                  name={isRead ? "done-all" : "done"}
-                  size={16}
-                  color={isRead ? '#3498db' : '#999'}
-              />
-            </View>
-        )}
-      </>
+    <>
+      <Text style={[styles.messageText, isReceived ? styles.receivedText : styles.sentText]}>
+        {message}
+      </Text>
+      <Text style={[styles.timeText, isReceived ? styles.receivedTime : styles.sentTime]}>
+        {time}
+      </Text>
+      {!isReceived && (
+        <View style={styles.readReceipt}>
+          <Icon
+            name={isRead ? "done-all" : "done"}
+            size={16}
+            color={isRead ? '#3498db' : '#999'}
+          />
+        </View>
+      )}
+    </>
   );
 
   if (isReceived) {
     return (
-        <View style={containerStyle}>
-          <View style={[styles.messageBubble, styles.receivedBubble]}>
-            {bubbleContent}
-          </View>
+      <View style={containerStyle}>
+        <View style={[styles.messageBubble, styles.receivedBubble]}>
+          {bubbleContent}
         </View>
+      </View>
     );
   }
 
   return (
-      <View style={containerStyle}>
-        <LinearGradient
-            colors={['#FF6600', '#FF6600']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={[styles.messageBubble, styles.sentBubble]}
-        >
-          {bubbleContent}
-        </LinearGradient>
-      </View>
+    <View style={containerStyle}>
+      <LinearGradient
+        colors={['#FF6600', '#FF6600']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={[styles.messageBubble, styles.sentBubble]}
+      >
+        {bubbleContent}
+      </LinearGradient>
+    </View>
   );
 };
 

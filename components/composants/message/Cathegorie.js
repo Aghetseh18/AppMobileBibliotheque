@@ -29,7 +29,7 @@ const Cathegorie = ({ route, navigation }) => {
         if (isMemoireCategory) {
           // Charger depuis la collection Memoire
           console.log('Chargement des mémoires pour la catégorie:', cathegorie);
-          const memoireQuery = query(collection(db, "Memoire"));
+          const memoireQuery = query(collection(db, "BiblioThesis"));
           const memoireSnapshot = await getDocs(memoireQuery);
 
           memoireSnapshot.forEach((doc) => {
@@ -114,73 +114,82 @@ const Cathegorie = ({ route, navigation }) => {
 
   if (loader) {
     return (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <ActivityIndicator size="large" color="#0000ff" />
-          <Text style={{ marginTop: 10 }}>Chargement en cours...</Text>
-        </View>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color="#0000ff" />
+        <Text style={{ marginTop: 10 }}>Chargement en cours...</Text>
+      </View>
     );
   }
 
   if (!currentUserdata?.email) {
     return (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <Text>Veuillez vous connecter pour accéder à cette page</Text>
-        </View>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <Text>Veuillez vous connecter pour accéder à cette page</Text>
+      </View>
     );
   }
 
   if (data.length === 0) {
     return (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
-          <Text style={{ fontSize: 18, textAlign: 'center', color: '#666' }}>
-            Aucun {cathegorie?.toLowerCase().includes('memoire') ? 'mémoire' : 'livre'} trouvé dans cette catégorie
-          </Text>
-        </View>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+        <Text style={{ fontSize: 18, textAlign: 'center', color: '#666' }}>
+          Aucun {cathegorie?.toLowerCase().includes('memoire') ? 'mémoire' : 'livre'} trouvé dans cette catégorie
+        </Text>
+      </View>
     );
   }
 
   return (
-      <ScrollView>
-        <View style={{
-          height: 50,
-          alignSelf: 'center',
-          backgroundColor: '#DCDCDC',
-          width: WIDTH
+    <ScrollView>
+      <View style={{
+        height: 50,
+        alignSelf: 'center',
+        backgroundColor: '#DCDCDC',
+        width: WIDTH
+      }}>
+        <Text style={{
+          textAlign: 'center',
+          fontWeight: '600',
+          fontFamily: 'San Francisco',
+          marginTop: 10,
+          fontSize: 20
         }}>
-          <Text style={{
-            textAlign: 'center',
-            fontWeight: '600',
-            fontFamily: 'San Francisco',
-            marginTop: 10,
-            fontSize: 20
-          }}>
-            {cathegorie || 'Catégorie non spécifiée'}
-          </Text>
-        </View>
-        <View style={{
-          flexDirection: 'row',
-          flexWrap: 'wrap',
-          justifyContent: 'center'
-        }}>
-          {data.map((item, index) => (
-              <BigRect
-                  key={`${item.id || index}-${item.type}`}
-                  type={item.type}
-                  datUser={currentUserdata}
-                  cathegorie={item.cathegorie || item.département || item.departement}
-                  props={navigation}
-                  name={item.name || item.titre || item.theme}
-                  desc={item.desc || item.description || item.abstract}
-                  etagere={item.etagere}
-                  exemplaire={item.exemplaire || 1}
-                  image={item.image}
-                  salle={item.salle}
-                  commentaire={item.commentaire || []}
-                  nomBD={item.collection || 'Memoire'}
-              />
-          ))}
-        </View>
-      </ScrollView>
+          {cathegorie || 'Catégorie non spécifiée'}
+        </Text>
+      </View>
+      <View style={{
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        justifyContent: 'center'
+      }}>
+        {data.map((item, index) => (
+          <BigRect
+            key={`${item.id || index}-${item.type}`}
+            type={item.type}
+            datUser={currentUserdata}
+            cathegorie={item.cathegorie || item.département || item.departement}
+            props={navigation}
+            name={item.name || item.titre || item.theme}
+            desc={item.desc || item.description || item.abstract}
+            etagere={item.etagere}
+            exemplaire={item.exemplaire || 1}
+            image={item.image}
+            salle={item.salle}
+            commentaire={item.commentaire || []}
+            nomBD={item.collection || 'Memoire'}
+            // Champs spécifiques BiblioThesis
+            annee={item.annee}
+            superviseur={item.superviseur}
+            keywords={item.keywords}
+            pdfUrl={item.pdfUrl}
+            matricule={item.matricule}
+            theme={item.theme}
+            createdAt={item.createdAt}
+            département={item.département}
+          />
+        ))}
+      </View>
+    </ScrollView>
   );
 };
 

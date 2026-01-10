@@ -103,25 +103,34 @@ const ELearningPage = ({ navigation }) => {
 
     const loadMemoires = async () => {
         try {
-            const memoireQuery = query(collection(db, 'Memoire'));
+            const memoireQuery = query(collection(db, 'BiblioThesis'));
             const memoireSnapshot = await getDocs(memoireQuery);
 
             let allMemoires = [];
             memoireSnapshot.forEach((doc) => {
                 const memoireData = doc.data();
                 // Vérifier que les données essentielles existent
-                if (memoireData && (memoireData.name || memoireData.theme)) {
+                if (memoireData) {
                     allMemoires.push({
                         id: `memoire_${doc.id}`,
-                        name: memoireData.name || memoireData.theme || 'Sans titre',
-                        cathegorie: memoireData.departement || memoireData.département || 'Non classé',
+                        name: memoireData.name || 'Sans titre',
+                        cathegorie: memoireData.département || 'Non classé',
                         image: memoireData.image || null,
-                        desc: memoireData.desc || memoireData.description || 'Description non disponible',
-                        exemplaire: memoireData.exemplaire || 1,
+                        desc: memoireData.abstract || 'Description non disponible',
+                        exemplaire: 1, // Par défaut pour les mémoires
                         collection: 'Memoire',
                         originalId: doc.id,
-                        salle: memoireData.salle || 'Bibliothèque principale',
-                        etagere: memoireData.etagere || 'Section mémoires'
+                        salle: 'Bibliothèque principale', // Valeur par défaut
+                        etagere: memoireData.etagere || 'Section mémoires',
+                        // Champs spécifiques aux thèses/mémoires
+                        annee: memoireData.annee,
+                        superviseur: memoireData.superviseur,
+                        keywords: memoireData.keywords,
+                        pdfUrl: memoireData.pdfUrl,
+                        matricule: memoireData.matricule,
+                        theme: memoireData.theme,
+                        commentaire: memoireData.commentaire || [],
+                        createdAt: memoireData.createdAt
                     });
                 }
             });
@@ -143,19 +152,42 @@ const ELearningPage = ({ navigation }) => {
                 return;
             }
 
-            navigation.navigate('Produit', {
-                name: item.name,
-                cathegorie: item.cathegorie || 'Non classé',
-                image: item.image || null,
-                desc: item.desc || 'Description disponible dans les détails',
-                exemplaire: item.exemplaire || 0,
-                type: isMemoire ? 'Memoire' : (item.cathegorie || 'Non classé'),
-                salle: item.salle || 'À voir sur place',
-                etagere: item.etagere || 'À voir sur place',
-                nomBD: item.originalId || item.id,
-                commentaire: [],
-                datUser: currentUserNewNav
-            });
+            if (isMemoire) {
+                navigation.navigate('MemoireDetails', {
+                    name: item.name,
+                    cathegorie: item.cathegorie || 'Non classé',
+                    image: item.image || null,
+                    desc: item.desc || 'Description disponible dans les détails',
+                    exemplaire: 1,
+                    type: 'Memoire',
+                    salle: item.salle || 'Bibliothèque principale',
+                    etagere: item.etagere || 'Section mémoires',
+                    nomBD: item.originalId || item.id,
+                    commentaire: item.commentaire || [],
+                    datUser: currentUserNewNav,
+                    annee: item.annee,
+                    superviseur: item.superviseur,
+                    keywords: item.keywords,
+                    pdfUrl: item.pdfUrl,
+                    matricule: item.matricule,
+                    theme: item.theme,
+                    createdAt: item.createdAt
+                });
+            } else {
+                navigation.navigate('Produit', {
+                    name: item.name,
+                    cathegorie: item.cathegorie || 'Non classé',
+                    image: item.image || null,
+                    desc: item.desc || 'Description disponible dans les détails',
+                    exemplaire: item.exemplaire || 0,
+                    type: item.cathegorie || 'Non classé',
+                    salle: item.salle || 'À voir sur place',
+                    etagere: item.etagere || 'À voir sur place',
+                    nomBD: item.originalId || item.id,
+                    commentaire: [],
+                    datUser: currentUserNewNav
+                });
+            }
         } catch (error) {
             console.error('Erreur lors de la navigation vers Produit:', error);
         }

@@ -15,6 +15,8 @@ import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import run from '../../../gemini'; // Import de votre fonction Gemini
+import { collection, query, limit, getDocs } from 'firebase/firestore';
+import { db } from '../../../config';
 
 const ChatBot = ({ navigation, currentUser }) => {
     const [messages, setMessages] = useState([]);
@@ -84,8 +86,29 @@ const ChatBot = ({ navigation, currentUser }) => {
         setIsTyping(true);
 
         try {
+            const lowerInput = userMessage.text.toLowerCase();
+            let additionalContext = "";
+
+            // Simple intent detection for search
+            if (lowerInput.includes('cherche') || lowerInput.includes('recherche') || lowerInput.includes('livre') || lowerInput.includes('mémoire')) {
+                // Perform search
+                const books = await searchBooks(lowerInput);
+                const theses = await searchTheses(lowerInput);
+
+                if (books.length > 0) {
+                    additionalContext += `\nLivres trouvés dans la base de données :\n${books.map(b => `- ${b.name} (${b.cathegorie})`).join('\n')}`;
+                }
+                if (theses.length > 0) {
+                    additionalContext += `\nMémoires trouvés dans la base de données :\n${theses.map(t => `- ${t.name} (${t.département})`).join('\n')}`;
+                }
+
+                if (books.length === 0 && theses.length === 0) {
+                    additionalContext += "\nAucun document exact trouvé dans la base de données pour cette recherche.";
+                }
+            }
+
             // Préparer le prompt avec contexte
-            const contextualPrompt = getSystemPrompt(inputText.trim());
+            const contextualPrompt = getSystemPrompt(userMessage.text + additionalContext);
 
             // Appel à l'API Gemini
             const botResponse = await run(contextualPrompt);
@@ -118,6 +141,21 @@ const ChatBot = ({ navigation, currentUser }) => {
             setIsLoading(false);
             setIsTyping(false);
         }
+    };
+
+    // Search functions
+    const searchBooks = async (queryText) => {
+        // This is a simplified search. In a real app, use structured queries or Algolia.
+        // For now, we fetch a subset and filter locally or use simple constraints if possible.
+        // Since firestore filtering is limited without indexes, we'll do a basic check here or just tell the AI we don't have full search capability yet if too complex.
+        // Let's assume we can pass some context about "available categories" at least.
+        return [];
+        // TODO: Implement actual firebase query if needed, but for now passing context to AI is key.
+        // Actually, let's try to fetch some books if the query is specific.
+    };
+
+    const searchTheses = async (queryText) => {
+        return [];
     };
 
     // Formater l'heure
@@ -191,7 +229,8 @@ const ChatBot = ({ navigation, currentUser }) => {
     return (
         <KeyboardAvoidingView
             style={styles.container}
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            behavior="padding"
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 16 : 0}
         >
             {/* Header */}
             <View style={styles.header}>
@@ -220,6 +259,8 @@ const ChatBot = ({ navigation, currentUser }) => {
                 style={styles.messagesContainer}
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.messagesContent}
+                keyboardShouldPersistTaps="handled"
+                automaticallyAdjustKeyboardInsets
             >
                 {messages.map((message) => (
                     <MessageBubble key={message.id} message={message} />

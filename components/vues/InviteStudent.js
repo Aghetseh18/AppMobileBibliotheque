@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, TouchableOpacity, TextInput, FlatList, Image, Share, Alert, ActivityIndicator } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, TextInput, FlatList, Image, Share, Alert, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
 import React, { useState } from 'react';
 import { Ionicons, MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 
@@ -133,7 +133,11 @@ export default function InviteStudent({ navigation }) {
     };
 
     return (
-        <View style={styles.container}>
+        <KeyboardAvoidingView
+            style={styles.container}
+            behavior="padding"
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 16 : 0}
+        >
             <View style={styles.header}>
                 <TouchableOpacity
                     style={styles.backButton}
@@ -201,6 +205,7 @@ export default function InviteStudent({ navigation }) {
                 <FlatList
                     data={recentContacts}
                     keyExtractor={(item) => item.id}
+                    keyboardShouldPersistTaps="handled"
                     renderItem={({ item }) => (
                         <TouchableOpacity
                             style={styles.contactItem}
@@ -226,7 +231,7 @@ export default function InviteStudent({ navigation }) {
                     )}
                 />
             </View>
-        </View>
+        </KeyboardAvoidingView>
     );
 }
 

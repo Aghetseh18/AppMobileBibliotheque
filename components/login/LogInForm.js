@@ -26,8 +26,7 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import * as Yup from 'yup';
 import { updateDoc, doc, Timestamp, setDoc, getDoc } from 'firebase/firestore';
 import { LinearGradient } from 'expo-linear-gradient';
-import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
-import FontAwesomeIcon from 'react-native-vector-icons/FontAwesome5';
+import { MaterialIcons as MaterialIcon, FontAwesome5 as FontAwesomeIcon } from '@expo/vector-icons';
 
 
 
@@ -41,8 +40,8 @@ const BG_COLOR = 'rgba(255, 255, 255, 0.92)';
 const TEXT_COLOR = '#333333';
 const LIGHT_GRAY = '#F9FAFB';
 
-const LoginForm = ({navigation}) => {
-  const {emailHigh, setEmailHigh} = useContext(UserContext);
+const LoginForm = ({ navigation }) => {
+  const { emailHigh, setEmailHigh } = useContext(UserContext);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -54,59 +53,59 @@ const LoginForm = ({navigation}) => {
 
     setIsLoading(true);
     sendPasswordResetEmail(auth, email)
-        .then(() => {
-          setIsLoading(false);
-          Alert.alert(
-              'Email Envoyé',
-              'Un email de réinitialisation de mot de passe a été envoyé à votre adresse.',
-              [{ text: 'OK' }]
-          );
-        })
-        .catch((error) => {
-          setIsLoading(false);
-          if (__DEV__) {
-            console.error('Erreur d\'envoi d\'email de réinitialisation:', error);
-          }
-          if (error.code === 'auth/user-not-found') {
-            Alert.alert('Compte introuvable', 'Aucun compte n\'existe avec cet email');
-          } else {
-            Alert.alert('Échec', 'Échec de l\'envoi de l\'email. Veuillez réessayer');
-          }
-        });
+      .then(() => {
+        setIsLoading(false);
+        Alert.alert(
+          'Email Envoyé',
+          'Un email de réinitialisation de mot de passe a été envoyé à votre adresse.',
+          [{ text: 'OK' }]
+        );
+      })
+      .catch((error) => {
+        setIsLoading(false);
+        if (__DEV__) {
+          console.error('Erreur d\'envoi d\'email de réinitialisation:', error);
+        }
+        if (error.code === 'auth/user-not-found') {
+          Alert.alert('Compte introuvable', 'Aucun compte n\'existe avec cet email');
+        } else {
+          Alert.alert('Échec', 'Échec de l\'envoi de l\'email. Veuillez réessayer');
+        }
+      });
   };
 
   // Méthode simplifiée pour la connexion sociale
   const handleSocialLogin = async (provider) => {
     Alert.alert(
-        "Connexion externe",
-        "Pour vous connecter avec ce service, l'application doit ouvrir votre navigateur. Continuer?",
-        [
-          {
-            text: "Annuler",
-            style: "cancel"
-          },
-          {
-            text: "Continuer",
-            onPress: () => {
-              Alert.alert(
-                  "Information",
-                  "Cette fonctionnalité nécessite une configuration supplémentaire côté serveur. Veuillez utiliser la connexion par email pour le moment."
-              );
-              // Ici, vous implémenteriez la redirection vers le flux OAuth
-              // Cette partie nécessiterait react-native-app-auth ou une solution similaire
-            }
+      "Connexion externe",
+      "Pour vous connecter avec ce service, l'application doit ouvrir votre navigateur. Continuer?",
+      [
+        {
+          text: "Annuler",
+          style: "cancel"
+        },
+        {
+          text: "Continuer",
+          onPress: () => {
+            Alert.alert(
+              "Information",
+              "Cette fonctionnalité nécessite une configuration supplémentaire côté serveur. Veuillez utiliser la connexion par email pour le moment."
+            );
+            // Ici, vous implémenteriez la redirection vers le flux OAuth
+            // Cette partie nécessiterait react-native-app-auth ou une solution similaire
           }
-        ]
+        }
+      ]
     );
   };
 
   const LoginFormSchema = Yup.object().shape({
     email: Yup.string()
-        .email('Veuillez entrer un email valide')
-        .required('Email requis'),
+      .email('Veuillez entrer un email valide')
+      .required('Email requis'),
     password: Yup.string()
-        .required('Mot de passe requis')
-        .min(6, 'Le mot de passe doit contenir au moins 6 caractères'),
+      .required('Mot de passe requis')
+      .min(6, 'Le mot de passe doit contenir au moins 6 caractères'),
   });
 
   const onLogin = async (values) => {
@@ -122,21 +121,21 @@ const LoginForm = ({navigation}) => {
         if (!user.emailVerified) {
           setIsLoading(false);
           Alert.alert(
-              'Validation requise',
-              'Veuillez vérifier votre email avant de vous connecter',
-              [
-                {
-                  text: 'Renvoyer l\'email',
-                  onPress: async () => {
-                    await sendEmailVerification(user);
-                    Alert.alert('Email envoyé', 'Veuillez vérifier votre boîte de réception');
-                  },
+            'Validation requise',
+            'Veuillez vérifier votre email avant de vous connecter',
+            [
+              {
+                text: 'Renvoyer l\'email',
+                onPress: async () => {
+                  await sendEmailVerification(user);
+                  Alert.alert('Email envoyé', 'Veuillez vérifier votre boîte de réception');
                 },
-                {
-                  text: 'Fermer',
-                  style: 'cancel',
-                },
-              ]
+              },
+              {
+                text: 'Fermer',
+                style: 'cancel',
+              },
+            ]
           );
           return;
         }
@@ -171,52 +170,52 @@ const LoginForm = ({navigation}) => {
         switch (error.code) {
           case 'auth/wrong-password':
             Alert.alert(
-                'Mot de passe incorrect',
-                'Vous avez saisi un mot de passe incorrect',
-                [
-                  {
-                    text: 'Réinitialiser',
-                    onPress: () => handleForgotPassword(values.email),
-                  },
-                  {
-                    text: 'Réessayer',
-                    style: 'cancel',
-                  },
-                ]
+              'Mot de passe incorrect',
+              'Vous avez saisi un mot de passe incorrect',
+              [
+                {
+                  text: 'Réinitialiser',
+                  onPress: () => handleForgotPassword(values.email),
+                },
+                {
+                  text: 'Réessayer',
+                  style: 'cancel',
+                },
+              ]
             );
             break;
           case 'auth/user-not-found':
             Alert.alert(
-                'Compte introuvable',
-                'Aucun utilisateur avec cet email n\'existe dans notre système',
-                [
-                  {
-                    text: 'Créer un compte',
-                    onPress: () => navigation.navigate('SignUpScreen'),
-                  },
-                  {
-                    text: 'Réessayer',
-                    style: 'cancel',
-                  },
-                ]
+              'Compte introuvable',
+              'Aucun utilisateur avec cet email n\'existe dans notre système',
+              [
+                {
+                  text: 'Créer un compte',
+                  onPress: () => navigation.navigate('SignUpScreen'),
+                },
+                {
+                  text: 'Réessayer',
+                  style: 'cancel',
+                },
+              ]
             );
             break;
           case 'auth/too-many-requests':
             Alert.alert(
-                'Trop de tentatives',
-                'Votre compte a été temporairement désactivé en raison de nombreuses tentatives de connexion. Veuillez réessayer plus tard ou réinitialiser votre mot de passe.'
+              'Trop de tentatives',
+              'Votre compte a été temporairement désactivé en raison de nombreuses tentatives de connexion. Veuillez réessayer plus tard ou réinitialiser votre mot de passe.'
             );
             break;
           case 'auth/network-request-failed':
             Alert.alert(
-                'Problème de connexion',
-                'Veuillez vérifier votre connexion internet et réessayer.'
+              'Problème de connexion',
+              'Veuillez vérifier votre connexion internet et réessayer.'
             );
             break;
           default:
             Alert.alert(
-                'Échec de connexion',
-                'Veuillez vérifier vos identifiants et réessayer.'
+              'Échec de connexion',
+              'Veuillez vérifier vos identifiants et réessayer.'
             );
         }
       }
@@ -226,110 +225,110 @@ const LoginForm = ({navigation}) => {
         console.error('Erreur technique:', error);
       }
       Alert.alert(
-          'Erreur',
-          'Une erreur s\'est produite lors de la connexion. Veuillez réessayer.'
+        'Erreur',
+        'Une erreur s\'est produite lors de la connexion. Veuillez réessayer.'
       );
     }
   };
 
   return (
-      <LinearGradient
-          colors={['rgba(241, 101, 34, 0.15)', 'rgba(255, 255, 255, 0.9)']}
-          style={styles.container}
-      >
-        <KeyboardAwareScrollView contentContainerStyle={styles.scrollView}>
-          <SafeAreaView style={styles.safeArea}>
-            <View style={styles.formContainer}>
-              <Text style={styles.title}>Bienvenue</Text>
-              <Text style={styles.subtitle}>Connectez-vous pour accéder à la bibliothèque</Text>
+    <LinearGradient
+      colors={['rgba(241, 101, 34, 0.15)', 'rgba(255, 255, 255, 0.9)']}
+      style={styles.container}
+    >
+      <KeyboardAwareScrollView contentContainerStyle={styles.scrollView}>
+        <SafeAreaView style={styles.safeArea}>
+          <View style={styles.formContainer}>
+            <Text style={styles.title}>Bienvenue</Text>
+            <Text style={styles.subtitle}>Connectez-vous pour accéder à la bibliothèque</Text>
 
-              <Formik
-                  initialValues={{ email: '', password: '' }}
-                  onSubmit={values => onLogin(values)}
-                  validationSchema={LoginFormSchema}
-                  validateOnMount={true}
-              >
-                {({ handleChange, handleBlur, handleSubmit, values, isValid, errors, touched }) => (
-                    <View style={styles.form}>
-                      <View style={styles.inputContainer}>
-                        <MaterialIcon name="email" size={20} color="#777" style={styles.inputIcon} />
-                        <TextInput
-                            style={styles.input}
-                            placeholderTextColor="#777"
-                            placeholder="Email"
-                            autoCapitalize="none"
-                            keyboardType="email-address"
-                            textContentType="emailAddress"
-                            onChangeText={handleChange('email')}
-                            onBlur={handleBlur('email')}
-                            value={values.email}
-                        />
-                      </View>
-                      {touched.email && errors.email && (
-                          <Text style={styles.errorText}>{errors.email}</Text>
-                      )}
+            <Formik
+              initialValues={{ email: '', password: '' }}
+              onSubmit={values => onLogin(values)}
+              validationSchema={LoginFormSchema}
+              validateOnMount={true}
+            >
+              {({ handleChange, handleBlur, handleSubmit, values, isValid, errors, touched }) => (
+                <View style={styles.form}>
+                  <View style={styles.inputContainer}>
+                    <MaterialIcon name="email" size={20} color="#777" style={styles.inputIcon} />
+                    <TextInput
+                      style={styles.input}
+                      placeholderTextColor="#777"
+                      placeholder="Email"
+                      autoCapitalize="none"
+                      keyboardType="email-address"
+                      textContentType="emailAddress"
+                      onChangeText={handleChange('email')}
+                      onBlur={handleBlur('email')}
+                      value={values.email}
+                    />
+                  </View>
+                  {touched.email && errors.email && (
+                    <Text style={styles.errorText}>{errors.email}</Text>
+                  )}
 
-                      <View style={styles.inputContainer}>
-                        <MaterialIcon name="lock" size={20} color="#777" style={styles.inputIcon} />
-                        <TextInput
-                            style={styles.input}
-                            placeholderTextColor="#777"
-                            placeholder="Mot de passe"
-                            autoCapitalize="none"
-                            autoCorrect={false}
-                            secureTextEntry={!showPassword}
-                            textContentType="password"
-                            onChangeText={handleChange('password')}
-                            onBlur={handleBlur('password')}
-                            value={values.password}
-                        />
-                        <TouchableOpacity
-                            onPress={() => setShowPassword(!showPassword)}
-                            style={styles.showPasswordButton}
-                        >
-                          <MaterialIcon name={showPassword ? "visibility-off" : "visibility"} size={20} color="#777" />
-                        </TouchableOpacity>
-                      </View>
-                      {touched.password && errors.password && (
-                          <Text style={styles.errorText}>{errors.password}</Text>
-                      )}
+                  <View style={styles.inputContainer}>
+                    <MaterialIcon name="lock" size={20} color="#777" style={styles.inputIcon} />
+                    <TextInput
+                      style={styles.input}
+                      placeholderTextColor="#777"
+                      placeholder="Mot de passe"
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      secureTextEntry={!showPassword}
+                      textContentType="password"
+                      onChangeText={handleChange('password')}
+                      onBlur={handleBlur('password')}
+                      value={values.password}
+                    />
+                    <TouchableOpacity
+                      onPress={() => setShowPassword(!showPassword)}
+                      style={styles.showPasswordButton}
+                    >
+                      <MaterialIcon name={showPassword ? "visibility-off" : "visibility"} size={20} color="#777" />
+                    </TouchableOpacity>
+                  </View>
+                  {touched.password && errors.password && (
+                    <Text style={styles.errorText}>{errors.password}</Text>
+                  )}
 
-                      <TouchableOpacity
-                          style={[styles.forgotPasswordButton]}
-                          onPress={() => handleForgotPassword(values.email)}
-                      >
-                        <Text style={styles.forgotPasswordText}>Mot de passe oublié?</Text>
-                      </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.forgotPasswordButton]}
+                    onPress={() => handleForgotPassword(values.email)}
+                  >
+                    <Text style={styles.forgotPasswordText}>Mot de passe oublié?</Text>
+                  </TouchableOpacity>
 
-                      <TouchableOpacity
-                          style={[
-                            styles.button,
-                            !isValid && styles.buttonDisabled,
-                            isValid && styles.buttonEnabled
-                          ]}
-                          onPress={handleSubmit}
-                          disabled={!isValid || isLoading}
-                      >
-                        {isLoading ? (
-                            <ActivityIndicator color="#FFFFFF" size="small" />
-                        ) : (
-                            <Text style={styles.buttonText}>Se connecter</Text>
-                        )}
-                      </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.button,
+                      !isValid && styles.buttonDisabled,
+                      isValid && styles.buttonEnabled
+                    ]}
+                    onPress={handleSubmit}
+                    disabled={!isValid || isLoading}
+                  >
+                    {isLoading ? (
+                      <ActivityIndicator color="#FFFFFF" size="small" />
+                    ) : (
+                      <Text style={styles.buttonText}>Se connecter</Text>
+                    )}
+                  </TouchableOpacity>
 
-                      <View style={styles.signupContainer}>
-                        <Text style={styles.signupText}>Nouveau sur la plateforme? </Text>
-                        <TouchableOpacity onPress={() => navigation.push('SignUpScreen')}>
-                          <Text style={styles.signupLink}>Créer un compte</Text>
-                        </TouchableOpacity>
-                      </View>
-                    </View>
-                )}
-              </Formik>
-            </View>
-          </SafeAreaView>
-        </KeyboardAwareScrollView>
-      </LinearGradient>
+                  <View style={styles.signupContainer}>
+                    <Text style={styles.signupText}>Nouveau sur la plateforme? </Text>
+                    <TouchableOpacity onPress={() => navigation.push('SignUpScreen')}>
+                      <Text style={styles.signupLink}>Créer un compte</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              )}
+            </Formik>
+          </View>
+        </SafeAreaView>
+      </KeyboardAwareScrollView>
+    </LinearGradient>
   );
 };
 
