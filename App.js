@@ -5,6 +5,7 @@ import NewNav from './components/navigation/NewNav';
 import { UserContextProvider } from './components/context/UserContext';
 import { FirebaseProvider } from './components/context/FirebaseContext';
 import { Ionicons, MaterialIcons  } from '@expo/vector-icons'; // <-- import icons you use
+import ClientAlertModal from './components/alerts/ClientAlertModal';
 
 export default function App() {
   const [fontsLoaded, setFontsLoaded] = useState(false);
@@ -38,6 +39,7 @@ export default function App() {
   return (
     <FirebaseProvider>
       <UserContextProvider>
+        <ClientAlertModal />
         <NewNav />
       </UserContextProvider>
     </FirebaseProvider>
