@@ -4,7 +4,25 @@ import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../../config';
 
 const MaintenanceGate = ({ children }) => {
-  const [maintenance, setMaintenance] = useState(false);
+  const [appMaintenance, setAppMaintenance] = useState(false);
+  const [orgMaintenance, setOrgMaintenance] = useState(false);
+
+  useEffect(() => {
+    const ref = doc(db, 'Configuration', 'AppSettings');
+    const unsubscribe = onSnapshot(
+      ref,
+      (snapshot) => {
+        const data = snapshot.data();
+        setAppMaintenance(Boolean(data?.MaintenanceMode));
+      },
+      (error) => {
+        console.error('Erreur maintenance listener:', error);
+        setAppMaintenance(false);
+      }
+    );
+
+    return () => unsubscribe();
+  }, []);
 
   useEffect(() => {
     const ref = doc(db, 'Configuration', 'OrgSettings');
@@ -12,17 +30,20 @@ const MaintenanceGate = ({ children }) => {
       ref,
       (snapshot) => {
         const data = snapshot.data();
-        setMaintenance(Boolean(data?.MaintenanceMode));
+        setOrgMaintenance(Boolean(data?.MaintenanceMode));
       },
       (error) => {
         console.error('Erreur maintenance listener:', error);
+        setOrgMaintenance(false);
       }
     );
 
     return () => unsubscribe();
   }, []);
 
-  if (maintenance) {
+  const maintenanceEnabled = appMaintenance || orgMaintenance;
+
+  if (maintenanceEnabled) {
     return (
       <Modal transparent animationType="fade" visible>
         <View style={styles.overlay}>
