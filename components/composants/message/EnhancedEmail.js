@@ -10,13 +10,12 @@ import {
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
-  Switch,
+  Animated,
+  Dimensions,
   SafeAreaView,
   StatusBar,
   KeyboardAvoidingView,
-  Platform,
-  Animated,
-  Dimensions
+  Platform
 } from 'react-native';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 // LinearGradient removed - using solid colors instead
@@ -39,9 +38,11 @@ import MessageBubble from './MessageBubble';
 import ChatBackground from './ChatBackground';
 import * as Haptics from 'expo-haptics';
 import { addNotification, NOTIFICATION_TYPES } from '../../utils/addNotification';
+import { useTranslation } from '../../hooks/useTranslation';
 
-// IMPORT de votre fonction Gemini
-import { runLibraryBot } from '../../../gemini';
+
+// IMPORT de votre fonction Gemini (Removed)
+// import { runLibraryBot } from '../../../gemini';
 
 const db = getFirestore();
 const HEIGHT = Dimensions.get('window').height;
@@ -49,10 +50,11 @@ const WIDTH = Dimensions.get('window').width;
 
 const MessageContexte = createContext({
   signale: true,
-  setSignale: () => {}
+  setSignale: () => { }
 });
 
 const EnhancedEmail = ({ navigation }) => {
+  const { t } = useTranslation();
   // États principaux
   const { datUser, setDatUser, datUserTest, setDatUserTest } = useContext(UserContext);
   const [currentUserEmail, setCurrentUserEmail] = useState('');
@@ -62,19 +64,21 @@ const EnhancedEmail = ({ navigation }) => {
   const [loader, setLoader] = useState(true);
   const [signale, setSignale] = useState(true);
 
-  // États bot
-  const [botEnabled, setBotEnabled] = useState(true);
+  // États bot (Removed)
+  // const [botEnabled, setBotEnabled] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
 
   // Refs et animations
   const scrollViewRef = useRef();
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const messagesRef = useRef([]); // Ref pour suivre les messages sans problème de closure
 
   // Effets de base
   useEffect(() => {
     Animated.timing(fadeAnim, {
       toValue: 1,
       duration: 1000,
+      useNativeDriver: true,
       useNativeDriver: true,
     }).start();
   }, []);
@@ -99,40 +103,50 @@ const EnhancedEmail = ({ navigation }) => {
         const userData = documentSnapshot.data();
         if (!userData.messages) userData.messages = [];
 
-        const previousMessages = dat.messages || [];
+        // Utiliser la Ref pour la comparaison (évite les problèmes de closure/stale state)
+        const previousMessages = messagesRef.current || [];
         const currentMessages = userData.messages || [];
+
         const newReceivedMessages = currentMessages.filter(msg => {
           if (msg.recue !== "R") return false;
           return !previousMessages.some(prevMsg =>
-              prevMsg.heure?.seconds === msg.heure?.seconds &&
-              prevMsg.texte === msg.texte &&
-              prevMsg.recue === "R"
+            prevMsg.heure?.seconds === msg.heure?.seconds &&
+            prevMsg.texte === msg.texte &&
+            prevMsg.recue === "R"
           );
         });
 
-        if (newReceivedMessages.length > 0 && dat.messages) {
+        // Ne notifier que si ce n'est PAS le premier chargement (messagesRef a déjà des données)
+        // ET qu'il y a effectivement de nouveaux messages
+        if (newReceivedMessages.length > 0 && messagesRef.current.length > 0) {
           const latestMessage = newReceivedMessages[newReceivedMessages.length - 1];
           const messagePreview = latestMessage.texte.length > 50
-              ? latestMessage.texte.substring(0, 50) + '...'
-              : latestMessage.texte;
+            ? latestMessage.texte.substring(0, 50) + '...'
+            : latestMessage.texte;
 
           try {
             await addNotification(
-                datUser.email,
-                NOTIFICATION_TYPES.MESSAGE,
-                'Nouveau message reçu',
-                `"${messagePreview}"`
+              datUser.email,
+              NOTIFICATION_TYPES.MESSAGE,
+              'Nouveau message reçu',
+              `"${messagePreview}"`
             );
           } catch (notifError) {
             console.log('Erreur notification (ignorée):', notifError.message);
           }
         }
 
+        // Mettre à jour la Ref et le State
+        messagesRef.current = userData.messages || [];
+
         setDat(userData);
         setDatUser(userData);
         setTimeout(() => scrollToBottom(), 100);
       } else {
         const newUserData = { email: datUser.email, messages: [] };
+
+        messagesRef.current = []; // Reset ref
+
         setDoc(docRef, newUserData);
         setDat(newUserData);
         setDatUser(newUserData);
@@ -179,61 +193,12 @@ const EnhancedEmail = ({ navigation }) => {
 
       await res();
 
-      // 2. Réponse bot si activé
+      // 2. Réponse bot si activé (Removed)
+      /* 
       if (botEnabled) {
-        setIsLoading(true);
-
-        try {
-          const conversationHistory = datUser.messages || [];
-          const botResponse = await runLibraryBot(values.trim(), conversationHistory);
-          console.log('Réponse bot Gemini:', botResponse);
-
-          const botMessageId = (dt.nanoseconds + 1).toString();
-          await updateDoc(washingtonRef, {
-            messages: arrayUnion({
-              id: botMessageId,
-              "recue": "R",
-              "texte": botResponse,
-              "heure": Timestamp.fromDate(new Date()),
-              "lu": false
-            })
-          });
-
-
-
-          // Marquer comme lu après 1 seconde
-          setTimeout(async () => {
-            try {
-              const userRef = doc(db, "BiblioUser", currentUserEmail.email);
-              const userDoc = await getDoc(userRef);
-              if (userDoc.exists()) {
-                const userData = userDoc.data();
-                const updatedMessages = userData.messages.map(msg =>
-                    msg.id === botMessageId ? { ...msg, lu: true } : msg
-                );
-                await updateDoc(userRef, { messages: updatedMessages });
-              }
-            } catch (error) {
-              console.log('Erreur marquage lu bot:', error);
-            }
-          }, 1000);
-
-        } catch (error) {
-          console.error('Erreur bot:', error);
-          const errorMessageId = (dt.nanoseconds + 2).toString();
-          await updateDoc(washingtonRef, {
-            messages: arrayUnion({
-              id: errorMessageId,
-              "recue": "R",
-              "texte": "Je rencontre des difficultés techniques. La bibliothécaire vous répondra directement.",
-              "heure": Timestamp.fromDate(new Date()),
-              "lu": false
-            })
-          });
-        }
-
-        setIsLoading(false);
-      }
+         ... bot logic removed ...
+      } 
+      */
 
       setValues("");
       scrollToBottom();
@@ -247,7 +212,7 @@ const EnhancedEmail = ({ navigation }) => {
     scrollViewRef.current?.scrollToEnd({ animated: true });
   };
 
-  const res = async function() {
+  const res = async function () {
     try {
       const docRef = doc(db, 'MessagesEnvoyé', values);
       await setDoc(docRef, {
@@ -264,7 +229,8 @@ const EnhancedEmail = ({ navigation }) => {
   // Fonctions d'affichage
   const formatTime = (timestamp) => {
     const date = new Date(timestamp.seconds * 1000);
-    return date.toLocaleTimeString('fr-FR', {
+    const locale = datUser?.language === 'en' ? 'en-US' : 'fr-FR';
+    return date.toLocaleTimeString(locale, {
       hour: '2-digit',
       minute: '2-digit'
     });
@@ -276,17 +242,20 @@ const EnhancedEmail = ({ navigation }) => {
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
 
-    if (date.toDateString() === today.toDateString()) return "Aujourd'hui";
-    if (date.toDateString() === yesterday.toDateString()) return "Hier";
+    // Check if dates match (ignoring time)
+    if (date.toDateString() === today.toDateString()) return t('today');
+    if (date.toDateString() === yesterday.toDateString()) return t('yesterday');
 
     const weekStart = new Date(today);
     weekStart.setDate(today.getDate() - today.getDay() + 1);
 
+    const locale = datUser?.language === 'en' ? 'en-US' : 'fr-FR';
+
     if (date >= weekStart) {
-      return date.toLocaleDateString('fr-FR', { weekday: 'long' });
+      return date.toLocaleDateString(locale, { weekday: 'long' });
     }
 
-    return date.toLocaleDateString('fr-FR', {
+    return date.toLocaleDateString(locale, {
       day: 'numeric',
       month: 'long',
       year: date.getFullYear() !== today.getFullYear() ? 'numeric' : undefined
@@ -302,67 +271,68 @@ const EnhancedEmail = ({ navigation }) => {
 
   // Composants
   const DateSeparator = ({ date }) => (
-      <View style={styles.dateSeparatorContainer}>
-        <View style={styles.dateSeparator}>
-          <Text style={styles.dateSeparatorText}>{formatDate(date)}</Text>
-        </View>
+    <View style={styles.dateSeparatorContainer}>
+      <View style={styles.dateSeparator}>
+        <Text style={styles.dateSeparatorText}>{formatDate(date)}</Text>
       </View>
+    </View>
   );
 
   const MessageBubbleEnhanced = ({ message, time, isReceived, isRead }) => {
     const isBot = message.includes('Bonjour !') || message.includes('Bonsoir !') ||
-        message.includes('Comment puis-je') || message.includes('BiblioApp') ||
-        message.includes('bibliothécaire') || message.includes('Je rencontre des difficultés');
+      message.includes('Comment puis-je') || message.includes('BiblioApp') ||
+      message.includes('bibliothécaire') || message.includes('Je rencontre des difficultés') ||
+      message.includes('How can I') || message.includes('Hello') || message.includes('techincal difficulties');
 
     return (
-        <View style={[styles.messageBubble, isReceived ? styles.receivedMessage : styles.sentMessage]}>
-          {isBot && isReceived && (
-              <View style={styles.botIndicator}>
-                <MaterialIcons name="smart-toy" size={16} color="#FF8A50" />
-              </View>
-          )}
+      <View style={[styles.messageBubble, isReceived ? styles.receivedMessage : styles.sentMessage]}>
+        {isBot && isReceived && (
+          <View style={styles.botIndicator}>
+            <MaterialIcons name="smart-toy" size={16} color="#FF8A50" />
+          </View>
+        )}
 
-          <View style={[
-            styles.messageContent,
-            isReceived ? styles.receivedMessageContent : styles.sentMessageContent,
-            isBot && styles.botMessageContent
+        <View style={[
+          styles.messageContent,
+          isReceived ? styles.receivedMessageContent : styles.sentMessageContent,
+          isBot && styles.botMessageContent
+        ]}>
+          <Text style={[
+            styles.messageText,
+            isReceived ? styles.receivedMessageText : styles.sentMessageText
           ]}>
+            {message}
+          </Text>
+
+          <View style={styles.messageFooter}>
             <Text style={[
-              styles.messageText,
-              isReceived ? styles.receivedMessageText : styles.sentMessageText
+              styles.messageTime,
+              isReceived ? styles.receivedMessageTime : styles.sentMessageTime
             ]}>
-              {message}
+              {time}
             </Text>
 
-            <View style={styles.messageFooter}>
-              <Text style={[
-                styles.messageTime,
-                isReceived ? styles.receivedMessageTime : styles.sentMessageTime
-              ]}>
-                {time}
-              </Text>
-
-              {!isReceived && (
-                  <View style={styles.messageStatus}>
-                    <View style={styles.doubleCheck}>
-                      <Ionicons
-                          name="checkmark"
-                          size={16}
-                          color={isRead ? "#4FC3F7" : "#9CA3AF"}
-                          style={styles.checkmark1}
-                      />
-                      <Ionicons
-                          name="checkmark"
-                          size={16}
-                          color={isRead ? "#4FC3F7" : "#9CA3AF"}
-                          style={styles.checkmark2}
-                      />
-                    </View>
-                  </View>
-              )}
-            </View>
+            {!isReceived && (
+              <View style={styles.messageStatus}>
+                <View style={styles.doubleCheck}>
+                  <Ionicons
+                    name="checkmark"
+                    size={16}
+                    color={isRead ? "#4FC3F7" : "#9CA3AF"}
+                    style={styles.checkmark1}
+                  />
+                  <Ionicons
+                    name="checkmark"
+                    size={16}
+                    color={isRead ? "#4FC3F7" : "#9CA3AF"}
+                    style={styles.checkmark2}
+                  />
+                </View>
+              </View>
+            )}
           </View>
         </View>
+      </View>
     );
   };
 
@@ -397,157 +367,134 @@ const EnhancedEmail = ({ navigation }) => {
   }, [datUser?.messages]);
 
   return (
-      <MessageContexte.Provider value={{ signale, setSignale }}>
-        <SafeAreaView style={styles.container}>
-          <StatusBar barStyle="light-content" />
-          <ChatBackground />
+    <MessageContexte.Provider value={{ signale, setSignale }}>
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="light-content" />
+        <ChatBackground />
 
-          {/* Header */}
-          <Animated.View style={[styles.header, { opacity: fadeAnim }]}>
-            <View style={styles.headerGradient}>
-              <BlurView intensity={20} style={styles.headerContent}>
-                <View style={styles.adminAvatar}>
-                  <MaterialIcons name="local-library" size={30} color="#fff" />
-                </View>
-                <View style={styles.headerTextContainer}>
-                  <Text style={styles.adminName}>Bibliothèque ENSPY</Text>
-                  <Text style={styles.adminStatus}>
-                    {botEnabled ? 'Assistant auto activé' : 'Service d\'assistance'}
-                  </Text>
-                </View>
+        {/* Header */}
+        <Animated.View style={[styles.header, { opacity: fadeAnim }]}>
+          <View style={styles.headerGradient}>
+            <BlurView intensity={20} style={styles.headerContent}>
+              <View style={styles.adminAvatar}>
+                <MaterialIcons name="local-library" size={30} color="#fff" />
+              </View>
+              <View style={styles.headerTextContainer}>
+                <Text style={styles.adminName}>{t('enspy_library')}</Text>
+                <Text style={styles.adminStatus}>
+                  {t('support_service')}
+                </Text>
+              </View>
+            </BlurView>
+          </View>
+        </Animated.View>
 
-                <View style={styles.botToggle}>
-                  <MaterialIcons
-                      name="smart-toy"
-                      size={20}
-                      color={botEnabled ? "#FFD700" : "#6a6b6eff"}
-                  />
-                  <Switch
-                      value={botEnabled}
-                      onValueChange={setBotEnabled}
-                      trackColor={{ false: 'rgba(255, 255, 255, 0.79)', true: 'rgba(255, 215, 0, 0.5)' }}
-                      thumbColor={botEnabled ? '#FFD700' : '#9CA3AF'}
-                      style={styles.switch}
-                  />
+        <KeyboardAvoidingView
+          behavior="padding"
+          style={styles.keyboardAvoidingView}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 16 : 0}
+        >
+          {/* Messages */}
+          <Animated.View style={[styles.chatContainer, { opacity: fadeAnim }]}>
+            <ScrollView
+              ref={scrollViewRef}
+              contentContainerStyle={styles.messagesContainer}
+              bounces={false}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              automaticallyAdjustKeyboardInsets
+            >
+              {datUserTest ? null : !datUser ? (
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator size="large" color="#22D3EE" />
+                  <Text style={styles.loadingText}>{t('loading_conversation')}</Text>
                 </View>
-              </BlurView>
-            </View>
+              ) : (
+                <>
+                  {datUser.messages?.length > 0 ? (
+                    datUser.messages.map((dev, index) => {
+                      const previousMessage = index > 0 ? datUser.messages[index - 1] : null;
+                      const showDate = shouldShowDate(dev, previousMessage);
+
+                      return (
+                        <React.Fragment key={index}>
+                          {showDate && <DateSeparator date={dev.heure} />}
+                          <MessageBubbleEnhanced
+                            message={dev.texte}
+                            time={formatTime(dev.heure)}
+                            isReceived={dev.recue === "R"}
+                            isRead={dev.lu}
+                          />
+                        </React.Fragment>
+                      );
+                    })
+                  ) : (
+                    <Animated.View style={[styles.welcomeContainer, { opacity: fadeAnim }]}>
+                      <View style={styles.welcomeIconContainer}>
+                        <MaterialIcons name="local-library" size={40} color="#fff" />
+                      </View>
+                      <Text style={styles.welcomeTitle}>{t('welcome_chat')}</Text>
+                      <Text style={styles.welcomeText}>
+                        {t('welcome_staff_msg')}
+                      </Text>
+                    </Animated.View>
+                  )}
+                </>
+              )}
+
+              {/* Indicateur de chargement bot */}
+              {isLoading && (
+                <View style={styles.botLoadingContainer}>
+                  <View style={styles.botIndicator}>
+                    <MaterialIcons name="smart-toy" size={16} color="#FF8A50" />
+                  </View>
+                  <View style={styles.botLoadingContent}>
+                    <ActivityIndicator size="small" color="#FF8A50" />
+                    <Text style={styles.botLoadingText}>{t('bot_preparing')}</Text>
+                  </View>
+                </View>
+              )}
+            </ScrollView>
           </Animated.View>
 
-          <KeyboardAvoidingView
-              behavior="padding"
-              style={styles.keyboardAvoidingView}
-              keyboardVerticalOffset={Platform.OS === "ios" ? 16 : 0}
-          >
-            {/* Messages */}
-            <Animated.View style={[styles.chatContainer, { opacity: fadeAnim }]}>
-              <ScrollView
-                  ref={scrollViewRef}
-                  contentContainerStyle={styles.messagesContainer}
-                  bounces={false}
-                  showsVerticalScrollIndicator={false}
-                  keyboardShouldPersistTaps="handled"
-                  automaticallyAdjustKeyboardInsets
+          {/* Input */}
+          <BlurView intensity={30} tint="light" style={styles.inputContainer}>
+            <View style={styles.inputWrapper}>
+              <TextInput
+                style={styles.messageInput}
+                placeholder={t('write_message')}
+                placeholderTextColor="#94A3B8"
+                onChangeText={(text) => {
+                  setValues(text);
+                  scrollViewRef.current?.scrollToEnd({ animated: true });
+                }}
+                value={values}
+                multiline
+                maxLength={500}
+                editable={!isLoading}
+                onContentSizeChange={() => {
+                  scrollViewRef.current?.scrollToEnd({ animated: true });
+                }}
+              />
+              <TouchableOpacity
+                onPress={ajouter}
+                style={styles.sendButton}
+                disabled={!values.trim() || isLoading}
               >
-                {datUserTest ? null : !datUser ? (
-                    <View style={styles.loadingContainer}>
-                      <ActivityIndicator size="large" color="#22D3EE" />
-                      <Text style={styles.loadingText}>Chargement de la conversation...</Text>
-                    </View>
+                {isLoading ? (
+                  <ActivityIndicator size="small" color="#fff" />
                 ) : (
-                    <>
-                      {datUser.messages?.length > 0 ? (
-                          datUser.messages.map((dev, index) => {
-                            const previousMessage = index > 0 ? datUser.messages[index - 1] : null;
-                            const showDate = shouldShowDate(dev, previousMessage);
-
-                            return (
-                                <React.Fragment key={index}>
-                                  {showDate && <DateSeparator date={dev.heure} />}
-                                  <MessageBubbleEnhanced
-                                      message={dev.texte}
-                                      time={formatTime(dev.heure)}
-                                      isReceived={dev.recue === "R"}
-                                      isRead={dev.lu}
-                                  />
-                                </React.Fragment>
-                            );
-                          })
-                      ) : (
-                          <Animated.View style={[styles.welcomeContainer, { opacity: fadeAnim }]}>
-                            <View style={styles.welcomeIconContainer}>
-                              <MaterialIcons name="local-library" size={40} color="#fff" />
-                            </View>
-                            <Text style={styles.welcomeTitle}>Bienvenue dans le chat!</Text>
-                            <Text style={styles.welcomeText}>
-                              {botEnabled
-                                  ? "Notre assistant automatique vous répondra immédiatement, puis notre équipe pourra compléter si nécessaire."
-                                  : "Notre équipe est là pour vous aider avec toutes vos questions concernant la bibliothèque."
-                              }
-                            </Text>
-                          </Animated.View>
-                      )}
-                    </>
+                  <View style={[styles.sendButtonGradient, { backgroundColor: values.trim() ? '#22D3EE' : '#1E293B' }]}>
+                    <Ionicons name="send" size={20} color="#fff" />
+                  </View>
                 )}
+              </TouchableOpacity>
+            </View>
 
-                {/* Indicateur de chargement bot */}
-                {isLoading && (
-                    <View style={styles.botLoadingContainer}>
-                      <View style={styles.botIndicator}>
-                        <MaterialIcons name="smart-toy" size={16} color="#FF8A50" />
-                      </View>
-                      <View style={styles.botLoadingContent}>
-                        <ActivityIndicator size="small" color="#FF8A50" />
-                        <Text style={styles.botLoadingText}>L'assistant prépare une réponse...</Text>
-                      </View>
-                    </View>
-                )}
-              </ScrollView>
-            </Animated.View>
-
-            {/* Input */}
-            <BlurView intensity={30} tint="light" style={styles.inputContainer}>
-              <View style={styles.inputWrapper}>
-                <TextInput
-                    style={styles.messageInput}
-                    placeholder="Écrivez votre message..."
-                    placeholderTextColor="#94A3B8"
-                    onChangeText={(text) => {
-                      setValues(text);
-                      scrollViewRef.current?.scrollToEnd({ animated: true });
-                    }}
-                    value={values}
-                    multiline
-                    maxLength={500}
-                    editable={!isLoading}
-                    onContentSizeChange={() => {
-                      scrollViewRef.current?.scrollToEnd({ animated: true });
-                    }}
-                />
-                <TouchableOpacity
-                    onPress={ajouter}
-                    style={styles.sendButton}
-                    disabled={!values.trim() || isLoading}
-                >
-                  {isLoading ? (
-                      <ActivityIndicator size="small" color="#fff" />
-                  ) : (
-                      <View style={[styles.sendButtonGradient, { backgroundColor: values.trim() ? '#22D3EE' : '#1E293B' }]}>
-                        <Ionicons name="send" size={20} color="#fff" />
-                      </View>
-                  )}
-                </TouchableOpacity>
-              </View>
-
-              {botEnabled && (
-                  <Text style={styles.botInfo}>
-                    🤖 Réponse automatique activée • La bibliothécaire peut compléter
-                  </Text>
-              )}
-            </BlurView>
-          </KeyboardAvoidingView>
-        </SafeAreaView>
-      </MessageContexte.Provider>
+          </BlurView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </MessageContexte.Provider>
   );
 };
 
@@ -577,7 +524,7 @@ const styles = StyleSheet.create({
   sentMessage: { justifyContent: 'flex-end', paddingLeft: 50 },
   receivedMessage: { justifyContent: 'flex-start', paddingRight: 50 },
   messageContent: { maxWidth: '80%', borderRadius: 18, paddingHorizontal: 16, paddingVertical: 12 },
-  sentMessageContent: { backgroundColor: '#E0F2FE', borderBottomRightRadius: 4, color:'#0F172A' },
+  sentMessageContent: { backgroundColor: '#E0F2FE', borderBottomRightRadius: 4, color: '#0F172A' },
   receivedMessageContent: { backgroundColor: '#1F2937', borderWidth: 1, borderColor: '#334155', borderBottomLeftRadius: 4 },
   botMessageContent: { backgroundColor: 'rgba(14, 165, 233, 0.08)', borderColor: 'rgba(14, 165, 233, 0.4)' },
   messageText: { fontSize: 15, lineHeight: 20 },

@@ -41,6 +41,7 @@ import { API_URL } from '../../apiConfig';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { MaterialCommunityIcons, Ionicons } from "@expo/vector-icons";
+import { useTranslation } from '../hooks/useTranslation';
 
 // Constants
 const { width: WIDTH, height: HEIGHT } = Dimensions.get('screen');
@@ -71,6 +72,7 @@ const COLORS = {
 const VueUn = (props) => {
   // Context and state
   const { currentUserNewNav, datUser, datUserTest } = useContext(UserContext) || {};
+  const { t } = useTranslation();
   const [dataWeb, setDataWeb] = useState([]);
   const [loaderWeb, setLoaderWeb] = useState(true);
   const [activeTab, setActiveTab] = useState('departement');
@@ -84,9 +86,9 @@ const VueUn = (props) => {
   // Helper: Get Greeting based on time
   const getGreeting = () => {
     const hour = new Date().getHours();
-    if (hour < 12) return 'Bonjour';
-    if (hour < 18) return 'Bon après-midi';
-    return 'Bonsoir';
+    if (hour < 12) return t('good_morning');
+    if (hour < 16) return t('good_afternoon');
+    return t('good_evening');
   };
 
   // ... (Keep existing fetch logic) ...
@@ -292,10 +294,10 @@ const VueUn = (props) => {
         <StatusBar barStyle="dark-content" />
         <View style={styles.loginContent}>
           <Image source={require('../../assets/ensp.png')} style={styles.loginLogo} resizeMode="contain" />
-          <Text style={styles.loginTitle}>Bienvenue</Text>
-          <Text style={styles.loginSubtitle}>Connectez-vous pour accéder à votre bibliothèque personnelle</Text>
+          <Text style={styles.loginTitle}>{t('welcome')}</Text>
+          <Text style={styles.loginSubtitle}>{t('login_subtitle')}</Text>
           <TouchableOpacity style={styles.loginButton} onPress={() => props.navigation.navigate('LoginScreen')}>
-            <Text style={styles.loginButtonText}>Se connecter</Text>
+            <Text style={styles.loginButtonText}>{t('login_btn')}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -319,7 +321,7 @@ const VueUn = (props) => {
         <Image source={{ uri: item.image }} style={styles.cardImage} resizeMode="cover" />
         {isRecommendation && (
           <View style={styles.badgeContainer}>
-            <Text style={styles.badgeText}>{Math.round(item.similarity_score || 0)}% Match</Text>
+            <Text style={styles.badgeText}>{Math.round(item.similarity_score || 0)}% {t('match')}</Text>
           </View>
         )}
       </View>
@@ -346,21 +348,28 @@ const VueUn = (props) => {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.primary} />
 
-      {/* Header / Hero Section */}
+      {/* Header / Hero Section Refined */}
       <LinearGradient
         colors={[COLORS.primary, COLORS.primaryLight]}
-        start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+        start={{ x: 0.1, y: 0 }} end={{ x: 0.9, y: 1 }}
         style={styles.headerContainer}
       >
         <View style={styles.headerTop}>
           <View>
-            <Text style={styles.headerGreeting}>{getGreeting()},</Text>
+            <Text style={styles.headerGreeting}>{getGreeting()}</Text>
             <Text style={styles.headerUsername}>
               {datUser?.name || datUser?.nom || 'Utilisateur'}
             </Text>
           </View>
-          <TouchableOpacity style={styles.profileButton} onPress={() => props.navigation.navigate('Profile')}>
-            <FontAwesome name="user-circle" size={36} color="rgba(255,255,255,0.9)" />
+          <TouchableOpacity
+            style={styles.profileButtonContainer}
+            onPress={() => props.navigation.navigate('Profile')}
+          >
+            <Image
+              source={datUser?.imageUri ? { uri: datUser.imageUri } : require('../../assets/userIc2.png')}
+              style={styles.profileAvatarHeader}
+            />
+            <View style={styles.onlineBadge} />
           </TouchableOpacity>
         </View>
       </LinearGradient>
@@ -373,9 +382,9 @@ const VueUn = (props) => {
         {/* E-Learning Section */}
         <View style={styles.section}>
           <SectionHeader
-            title="E-Learning"
+            title={t('e_learning')}
             icon={<FontAwesome name="graduation-cap" size={20} color={COLORS.primary} style={styles.sectionIcon} />}
-            subtitle="Formez-vous avec les meilleures plateformes"
+            subtitle={t('e_learning_sub')}
           />
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalList}>
             {dataWeb.map((e, index) => <WebResourceCard key={index} item={e} />)}
@@ -386,9 +395,9 @@ const VueUn = (props) => {
         {(userRecommendations.length > 0) && (
           <View style={styles.section}>
             <SectionHeader
-              title="Pour vous"
+              title={t('for_you')}
               icon={<MaterialIcons name="recommend" size={22} color={COLORS.primary} style={styles.sectionIcon} />}
-              subtitle="Basé sur vos lectures récentes"
+              subtitle={t('for_you_sub')}
             />
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalList}>
               {userRecommendations.map((book, index) => (
@@ -400,7 +409,7 @@ const VueUn = (props) => {
                     name: book.title, desc: book.description || '', image: book.image,
                     cathegorie: book.category, type: book.type || '', salle: book.salle || '',
                     etagere: book.etagere || '', exemplaire: book.exemplaire || 0,
-                    nomBD: 'BiblioInformatique', commentaire: book.commentaire || []
+                    nomBD: book.id, commentaire: book.commentaire || []
                   })}
                 />
               ))}
@@ -412,7 +421,7 @@ const VueUn = (props) => {
         {(popularBooks.length > 0) && (
           <View style={styles.section}>
             <SectionHeader
-              title="Tendances"
+              title={t('trends')}
               icon={<Ionicons name="trending-up" size={22} color={COLORS.primary} style={styles.sectionIcon} />}
             />
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalList}>
@@ -424,7 +433,7 @@ const VueUn = (props) => {
                     name: book.title, desc: book.description || '', image: book.image,
                     cathegorie: book.category, type: book.type || '', salle: book.salle || '',
                     etagere: book.etagere || '', exemplaire: book.exemplaire || 0,
-                    nomBD: 'BiblioInformatique', commentaire: book.commentaire || []
+                    nomBD: book.id, commentaire: book.commentaire || []
                   })}
                 />
               ))}
@@ -439,13 +448,13 @@ const VueUn = (props) => {
               style={[styles.tab, activeTab === 'departement' && styles.activeTab]}
               onPress={() => setActiveTab('departement')}
             >
-              <Text style={[styles.tabText, activeTab === 'departement' && styles.activeTabText]}>LIVRES</Text>
+              <Text style={[styles.tabText, activeTab === 'departement' && styles.activeTabText]}>{t('tab_books')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.tab, activeTab === 'memoire' && styles.activeTab]}
               onPress={() => setActiveTab('memoire')}
             >
-              <Text style={[styles.tabText, activeTab === 'memoire' && styles.activeTabText]}>MÉMOIRES</Text>
+              <Text style={[styles.tabText, activeTab === 'memoire' && styles.activeTabText]}>{t('tab_theses')}</Text>
             </TouchableOpacity>
           </View>
 
@@ -550,93 +559,140 @@ const styles = StyleSheet.create({
   headerContainer: {
     paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight + 20 : 60,
     paddingHorizontal: 20,
-    paddingBottom: 25,
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
+    paddingBottom: 30,
+    borderBottomLeftRadius: 35,
+    borderBottomRightRadius: 35,
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.2,
+    shadowRadius: 15,
+    elevation: 10,
   },
   headerTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20
+    marginBottom: 25
   },
   headerGreeting: {
     fontSize: 14,
-    color: 'rgba(255,255,255,0.8)',
-    fontWeight: '500'
+    color: 'rgba(255,255,255,0.9)',
+    fontWeight: '600',
+    letterSpacing: 0.5,
+    marginBottom: 2,
   },
   headerUsername: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontSize: 26,
+    fontWeight: '900',
     color: COLORS.text.white,
+    letterSpacing: 0.2,
   },
-  searchBar: {
+  profileButtonContainer: {
+    position: 'relative',
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.3)',
+    borderRadius: 25,
+    padding: 2,
+  },
+  profileAvatarHeader: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+  },
+  onlineBadge: {
+    position: 'absolute',
+    bottom: 2,
+    right: 2,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#4CAF50',
+    borderWidth: 2,
+    borderColor: COLORS.primary,
+  },
+  searchBarContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: COLORS.surface,
-    paddingVertical: 12,
-    paddingHorizontal: 15,
-    borderRadius: 15,
+    padding: 8,
+    borderRadius: 18,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 5 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowRadius: 10,
+    elevation: 5,
   },
-  searchText: {
-    marginLeft: 10,
+  searchInner: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingLeft: 10,
+  },
+  searchPlaceholderText: {
+    marginLeft: 12,
     color: COLORS.text.light,
-    fontSize: 15
+    fontSize: 15,
+    fontWeight: '500',
   },
-
-  // Content
+  filterBtn: {
+    backgroundColor: 'rgba(255, 102, 0, 0.1)',
+    width: 40,
+    height: 40,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   mainScrollView: {
     flex: 1,
-    marginTop: -10
+    marginTop: 0,
   },
   section: {
-    marginTop: 25,
+    marginTop: 30,
   },
   sectionHeader: {
-    paddingHorizontal: 20,
-    marginBottom: 15
+    paddingHorizontal: 22,
+    marginBottom: 18,
   },
   sectionTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 4
+    marginBottom: 6,
   },
   sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 22,
+    fontWeight: '800',
     color: COLORS.text.primary,
-    marginLeft: 5
+    marginLeft: 8,
+    letterSpacing: -0.5,
   },
   sectionIcon: {
-    marginRight: 6
+    marginRight: 2,
   },
   sectionSubtitle: {
     fontSize: 13,
+    fontWeight: '600',
     color: COLORS.text.secondary,
-    marginLeft: 32 // Align with title text
+    marginLeft: 34, // Correct alignment
+    opacity: 0.8,
   },
   horizontalList: {
-    paddingHorizontal: 15,
-    paddingBottom: 10
+    paddingLeft: 18,
+    paddingRight: 30,
+    paddingBottom: 15,
   },
 
-  // Cards
+  // Cards Refined
   card: {
-    width: 150,
-    marginHorizontal: 5,
+    width: 160,
+    marginRight: 16,
     backgroundColor: COLORS.surface,
-    borderRadius: 16,
-    shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-    marginBottom: 4
+    borderRadius: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.08,
+    shadowRadius: 15,
+    elevation: 5,
+    overflow: 'hidden',
   },
   cardImageContainer: {
     height: 200,
@@ -646,36 +702,41 @@ const styles = StyleSheet.create({
   cardImage: {
     width: '100%',
     height: '100%',
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
   },
   badgeContainer: {
     position: 'absolute',
-    top: 10,
-    right: 10,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderRadius: 12
+    top: 12,
+    right: 12,
+    backgroundColor: COLORS.primary,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 14,
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
   },
   badgeText: {
     color: '#fff',
     fontSize: 10,
-    fontWeight: 'bold'
+    fontWeight: '800',
+    letterSpacing: 0.5,
   },
   cardContent: {
-    padding: 12,
+    padding: 14,
   },
   cardTitle: {
-    fontSize: 14,
-    fontWeight: 'bold',
+    fontSize: 15,
+    fontWeight: '800',
     color: COLORS.text.primary,
-    marginBottom: 4,
-    lineHeight: 18
+    marginBottom: 6,
+    lineHeight: 20,
   },
   cardCategory: {
     fontSize: 12,
+    fontWeight: '600',
     color: COLORS.text.secondary,
+    opacity: 0.7,
   },
 
   // Web Resources
@@ -685,29 +746,31 @@ const styles = StyleSheet.create({
     width: 80
   },
   webIconContainer: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 64,
+    height: 64,
+    borderRadius: 22,
     backgroundColor: COLORS.surface,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 8,
-    shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    marginBottom: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    elevation: 3,
     borderWidth: 1,
-    borderColor: COLORS.background
+    borderColor: 'rgba(0,0,0,0.03)',
   },
   webIcon: {
-    width: 30,
-    height: 30
+    width: 34,
+    height: 34
   },
   webTitle: {
-    fontSize: 11,
+    fontSize: 12,
+    fontWeight: '700',
     color: COLORS.text.primary,
-    textAlign: 'center'
+    textAlign: 'center',
+    letterSpacing: -0.2,
   },
 
   // Tabs

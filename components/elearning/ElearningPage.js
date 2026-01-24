@@ -14,10 +14,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '../../firebaseConfig';
 import { UserContext } from '../context/UserContext';
+import { useTranslation } from '../hooks/useTranslation';
 
 const { WIDTH, HEIGHT } = Dimensions.get('window');
 
 const ELearningPage = ({ navigation }) => {
+    const { t } = useTranslation();
     const { currentUserNewNav } = useContext(UserContext);
     const [allLivres, setAllLivres] = useState([]);
     const [allMemoires, setAllMemoires] = useState([]);
@@ -81,15 +83,15 @@ const ELearningPage = ({ navigation }) => {
                     if (bookData && bookData.name) {
                         allLivres.push({
                             id: `livre_${collectionName}_${doc.id}`,
-                            name: bookData.name || 'Sans titre',
-                            cathegorie: bookData.cathegorie || 'Non classé',
+                            name: bookData.name || t('untitled'),
+                            cathegorie: bookData.cathegorie || t('uncategorized'),
                             image: bookData.image || null,
                             desc: bookData.desc || bookData.description || 'Description non disponible',
                             exemplaire: bookData.exemplaire || 0,
                             collection: collectionName,
                             originalId: doc.id,
-                            salle: bookData.salle || 'À voir sur place',
-                            etagere: bookData.etagere || 'À voir sur place'
+                            salle: bookData.salle || t('consultation_on_site'),
+                            etagere: bookData.etagere || t('consultation_on_site')
                         });
                     }
                 });
@@ -113,8 +115,8 @@ const ELearningPage = ({ navigation }) => {
                 if (memoireData) {
                     allMemoires.push({
                         id: `memoire_${doc.id}`,
-                        name: memoireData.name || 'Sans titre',
-                        cathegorie: memoireData.département || 'Non classé',
+                        name: memoireData.name || t('untitled'),
+                        cathegorie: memoireData.département || t('uncategorized'),
                         image: memoireData.image || null,
                         desc: memoireData.abstract || 'Description non disponible',
                         exemplaire: 1, // Par défaut pour les mémoires
@@ -231,18 +233,18 @@ const ELearningPage = ({ navigation }) => {
 
                 <View style={styles.itemInfo}>
                     <Text style={styles.itemTitle} numberOfLines={2}>
-                        {item.name || 'Sans titre'}
+                        {item.name || t('untitled')}
                     </Text>
                     <Text style={styles.itemCategory} numberOfLines={1}>
-                        {item.cathegorie || 'Non classé'}
+                        {item.cathegorie || t('uncategorized')}
                     </Text>
                     <Text style={[
                         styles.availabilityText,
                         item.exemplaire > 0 ? styles.available : styles.unavailable
                     ]}>
                         {item.exemplaire > 0 ?
-                            `${item.exemplaire} exemplaire${item.exemplaire > 1 ? 's' : ''}` :
-                            'Indisponible'
+                            `${item.exemplaire} ${t('available_exemplaires')}` :
+                            t('unavailable')
                         }
                     </Text>
                 </View>
@@ -302,13 +304,13 @@ const ELearningPage = ({ navigation }) => {
             <SafeAreaView style={styles.container}>
                 <View style={styles.loginPromptContainer}>
                     <Text style={styles.loginPromptText}>
-                        Veuillez vous connecter pour accéder à cette page
+                        {t('login_required_msg')}
                     </Text>
                     <TouchableOpacity
                         style={styles.loginButton}
                         onPress={() => navigation.navigate('LoginScreen')}
                     >
-                        <Text style={styles.loginButtonText}>Se connecter</Text>
+                        <Text style={styles.loginButtonText}>{t('login_action')}</Text>
                     </TouchableOpacity>
                 </View>
             </SafeAreaView>
@@ -325,7 +327,7 @@ const ELearningPage = ({ navigation }) => {
                 >
                     <Ionicons name="arrow-back" size={24} color="#000" />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Bibliothèque</Text>
+                <Text style={styles.headerTitle}>{t('library_title')}</Text>
                 <TouchableOpacity
                     style={styles.refreshButton}
                     onPress={loadAllData}
@@ -336,15 +338,15 @@ const ELearningPage = ({ navigation }) => {
 
             {/* Tabs */}
             <View style={styles.tabsContainer}>
-                {renderTabButton('livres', 'Livres', allLivres.length)}
-                {renderTabButton('memoires', 'Mémoires', allMemoires.length)}
+                {renderTabButton('livres', t('tab_books_label'), allLivres.length)}
+                {renderTabButton('memoires', t('tab_theses_label'), allMemoires.length)}
             </View>
 
             {/* Content */}
             {loading ? (
                 <View style={styles.loadingContainer}>
                     <ActivityIndicator size="large" color="#007AFF" />
-                    <Text style={styles.loadingText}>Chargement...</Text>
+                    <Text style={styles.loadingText}>{t('loading_data')}</Text>
                 </View>
             ) : (
                 <>
@@ -362,7 +364,7 @@ const ELearningPage = ({ navigation }) => {
                                     color="#ccc"
                                 />
                                 <Text style={styles.emptyText}>
-                                    Aucun {activeTab === 'livres' ? 'livre' : 'mémoire'} disponible
+                                    {activeTab === 'livres' ? t('no_book_available') : t('no_thesis_available')}
                                 </Text>
                             </View>
                         }

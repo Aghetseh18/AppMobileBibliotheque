@@ -3,8 +3,10 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { getAuth, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
+import { useTranslation } from '../hooks/useTranslation';
 
 export default function ChangePassword({ navigation }) {
+    const { t } = useTranslation();
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -15,17 +17,17 @@ export default function ChangePassword({ navigation }) {
 
     const handleChangePassword = async () => {
         if (!currentPassword || !newPassword || !confirmPassword) {
-            Alert.alert('Erreur', 'Veuillez remplir tous les champs');
+            Alert.alert(t('error'), t('fill_all_fields'));
             return;
         }
 
         if (newPassword !== confirmPassword) {
-            Alert.alert('Erreur', 'Les nouveaux mots de passe ne correspondent pas');
+            Alert.alert(t('error'), t('passwords_mismatch'));
             return;
         }
 
         if (newPassword.length < 6) {
-            Alert.alert('Erreur', 'Le nouveau mot de passe doit contenir au moins 6 caractères');
+            Alert.alert(t('error'), t('password_too_short'));
             return;
         }
 
@@ -35,7 +37,7 @@ export default function ChangePassword({ navigation }) {
             const user = auth.currentUser;
 
             if (!user || !user.email) {
-                throw new Error('Utilisateur non connecté');
+                throw new Error(t('user_not_connected'));
             }
 
             // Réauthentifier l'utilisateur
@@ -45,15 +47,15 @@ export default function ChangePassword({ navigation }) {
             // Mettre à jour le mot de passe
             await updatePassword(user, newPassword);
 
-            Alert.alert('Succès', 'Votre mot de passe a été mis à jour avec succès');
+            Alert.alert(t('success'), t('password_update_success'));
             navigation.goBack();
         } catch (error) {
             console.error('Erreur lors du changement de mot de passe:', error);
 
             if (error.code === 'auth/wrong-password') {
-                Alert.alert('Erreur', 'Le mot de passe actuel est incorrect');
+                Alert.alert(t('error'), t('wrong_current_password'));
             } else {
-                Alert.alert('Erreur', 'Impossible de changer le mot de passe. Veuillez réessayer plus tard.');
+                Alert.alert(t('error'), t('password_update_error'));
             }
         } finally {
             setLoading(false);
@@ -70,24 +72,24 @@ export default function ChangePassword({ navigation }) {
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
                     <Ionicons name="arrow-back" size={24} color="#FF8A50" />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Modifier le mot de passe</Text>
+                <Text style={styles.headerTitle}>{t('change_password_title')}</Text>
                 <View style={{ width: 24 }} />
             </View>
 
             <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
                 <Text style={styles.infoText}>
-                    Veuillez saisir votre mot de passe actuel et votre nouveau mot de passe
+                    {t('change_password_info')}
                 </Text>
 
                 <View style={styles.inputContainer}>
-                    <Text style={styles.inputLabel}>Mot de passe actuel</Text>
+                    <Text style={styles.inputLabel}>{t('current_password')}</Text>
                     <View style={styles.passwordInputWrapper}>
                         <TextInput
                             style={styles.passwordInput}
                             secureTextEntry={!showCurrentPassword}
                             value={currentPassword}
                             onChangeText={setCurrentPassword}
-                            placeholder="Votre mot de passe actuel"
+                            placeholder={t('current_password_placeholder')}
                         />
                         <TouchableOpacity
                             style={styles.eyeIcon}
@@ -103,14 +105,14 @@ export default function ChangePassword({ navigation }) {
                 </View>
 
                 <View style={styles.inputContainer}>
-                    <Text style={styles.inputLabel}>Nouveau mot de passe</Text>
+                    <Text style={styles.inputLabel}>{t('new_password')}</Text>
                     <View style={styles.passwordInputWrapper}>
                         <TextInput
                             style={styles.passwordInput}
                             secureTextEntry={!showNewPassword}
                             value={newPassword}
                             onChangeText={setNewPassword}
-                            placeholder="Votre nouveau mot de passe"
+                            placeholder={t('new_password_placeholder')}
                         />
                         <TouchableOpacity
                             style={styles.eyeIcon}
@@ -126,14 +128,14 @@ export default function ChangePassword({ navigation }) {
                 </View>
 
                 <View style={styles.inputContainer}>
-                    <Text style={styles.inputLabel}>Confirmer le nouveau mot de passe</Text>
+                    <Text style={styles.inputLabel}>{t('confirm_password')}</Text>
                     <View style={styles.passwordInputWrapper}>
                         <TextInput
                             style={styles.passwordInput}
                             secureTextEntry={!showConfirmPassword}
                             value={confirmPassword}
                             onChangeText={setConfirmPassword}
-                            placeholder="Confirmer votre nouveau mot de passe"
+                            placeholder={t('confirm_password_placeholder')}
                         />
                         <TouchableOpacity
                             style={styles.eyeIcon}
@@ -154,7 +156,7 @@ export default function ChangePassword({ navigation }) {
                     disabled={loading}
                 >
                     <Text style={styles.changeButtonText}>
-                        {loading ? 'Chargement...' : 'Changer le mot de passe'}
+                        {loading ? t('loading') : t('change_password_btn')}
                     </Text>
                 </TouchableOpacity>
             </ScrollView>

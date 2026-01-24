@@ -1,28 +1,31 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from '../hooks/useTranslation';
 
 export default function Aide({ navigation }) {
+    const { t } = useTranslation();
+
     const helpSections = [
         {
-            title: "Comment réserver un livre ?",
-            content: "1. Recherchez le livre dans la bibliothèque\n2. Cliquez sur 'Réserver'\n3. Votre réservation sera confirmée\n4. Venez récupérer le livre à la bibliothèque"
+            title: t('help_q1'),
+            content: t('help_a1')
         },
         {
-            title: "Comment voir mes emprunts ?",
-            content: "Allez dans Paramètres > Mes emprunts pour voir tous vos livres empruntés et leur date de retour."
+            title: t('help_q2'),
+            content: t('help_a2')
         },
         {
-            title: "Que faire si un livre est indisponible ?",
-            content: "Si un livre est indisponible, vous pouvez :\n- Vérifier s'il y a des livres similaires\n- Demander à la bibliothécaire quand il sera disponible\n- Mettre une alerte (fonction à venir)"
+            title: t('help_q3'),
+            content: t('help_a3')
         },
         {
-            title: "Comment contacter la bibliothèque ?",
-            content: "Utilisez la fonction Chat pour envoyer un message directement à la bibliothécaire."
+            title: t('help_q4'),
+            content: t('help_a4')
         },
         {
-            title: "Durée d'emprunt",
-            content: "La durée standard d'emprunt est de 2 semaines. Vous pouvez demander une prolongation via le chat."
+            title: t('help_q5'),
+            content: t('help_a5')
         }
     ];
 
@@ -32,13 +35,13 @@ export default function Aide({ navigation }) {
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
                     <Ionicons name="arrow-back" size={24} color="#FF8A50" />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Aide et support</Text>
+                <Text style={styles.headerTitle}>{t('help_title')}</Text>
                 <View style={{ width: 24 }} />
             </View>
 
             <ScrollView style={styles.content}>
                 <Text style={styles.subtitle}>
-                    Trouvez des réponses à vos questions les plus fréquentes
+                    {t('help_subtitle')}
                 </Text>
 
                 {helpSections.map((section, index) => (
@@ -49,13 +52,13 @@ export default function Aide({ navigation }) {
                 ))}
 
                 <View style={styles.contactSection}>
-                    <Text style={styles.contactTitle}>Besoin d'aide supplémentaire ?</Text>
+                    <Text style={styles.contactTitle}>{t('need_more_help')}</Text>
                     <TouchableOpacity
                         style={styles.chatButton}
                         onPress={() => navigation.navigate('Email')}
                     >
                         <Ionicons name="chatbubble-outline" size={20} color="#fff" />
-                        <Text style={styles.chatButtonText}>Contacter la bibliothèque</Text>
+                        <Text style={styles.chatButtonText}>{t('contact_library')}</Text>
                     </TouchableOpacity>
                 </View>
             </ScrollView>

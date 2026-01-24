@@ -5,9 +5,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '../../config';
 import * as ImagePicker from 'expo-image-picker';
+import { useTranslation } from '../hooks/useTranslation';
 
 export default function EditProfile({ route, navigation }) {
     const { imageM, nameM, emailM, telM, departM, niveauM } = route.params;
+    const { t } = useTranslation();
 
     const [name, setName] = useState(nameM || '');
     const [email, setEmail] = useState(emailM || '');
@@ -21,7 +23,7 @@ export default function EditProfile({ route, navigation }) {
         try {
             const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
             if (status !== 'granted') {
-                Alert.alert('Permission refusée', 'Nous avons besoin de votre permission pour accéder à vos photos');
+                Alert.alert(t('error'), t('permission_photos_needed') || 'Nous avons besoin de votre permission pour accéder à vos photos');
                 return;
             }
 
@@ -37,13 +39,13 @@ export default function EditProfile({ route, navigation }) {
             }
         } catch (error) {
             console.error("Erreur lors de la sélection de l'image:", error);
-            Alert.alert('Erreur', "Impossible de sélectionner l'image");
+            Alert.alert(t('error'), t('image_selection_failed') || "Impossible de sélectionner l'image");
         }
     };
 
     const saveProfile = async () => {
         if (!email) {
-            Alert.alert('Erreur', 'Email requis');
+            Alert.alert(t('error'), t('email_required'));
             return;
         }
 
@@ -57,11 +59,11 @@ export default function EditProfile({ route, navigation }) {
                 imageUri
             });
 
-            Alert.alert('Succès', 'Profil mis à jour avec succès');
+            Alert.alert(t('success'), t('profile_update_success'));
             navigation.goBack();
         } catch (error) {
             console.error("Erreur lors de la mise à jour:", error);
-            Alert.alert('Erreur', 'Impossible de mettre à jour le profil');
+            Alert.alert(t('error'), t('profile_update_error'));
         } finally {
             setSaving(false);
         }
@@ -73,103 +75,132 @@ export default function EditProfile({ route, navigation }) {
             behavior="padding"
             keyboardVerticalOffset={Platform.OS === 'ios' ? 16 : 0}
         >
-        <View style={styles.container}>
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                    <Ionicons name="arrow-back" size={24} color="#FF8A50" />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>Modifier le profil</Text>
-                <View style={{ width: 24 }} />
-            </View>
-
-            <ScrollView
-                showsVerticalScrollIndicator={false}
-                style={styles.scrollView}
-                keyboardShouldPersistTaps="handled"
-            >
-                <View style={styles.imageContainer}>
-                    <TouchableOpacity onPress={pickImage} style={styles.profileImageContainer}>
-                        {imageUri ? (
-                            <Image style={styles.profileImage} source={{ uri: imageUri }} />
-                        ) : (
-                            <View style={styles.placeholderImage}>
-                                <Ionicons name="person" size={40} color="#CCCCCC" />
-                            </View>
-                        )}
-                        <View style={styles.cameraButton}>
-                            <Ionicons name="camera" size={14} color="#fff" />
-                        </View>
+            <View style={styles.container}>
+                <View style={styles.header}>
+                    <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+                        <Ionicons name="arrow-back" size={24} color="#FF8A50" />
                     </TouchableOpacity>
-                    <Text style={styles.changePhotoText}>Changer la photo</Text>
+                    <Text style={styles.headerTitle}>{t('edit_profile_title')}</Text>
+                    <View style={{ width: 44 }} />
                 </View>
 
-                <View style={styles.formSection}>
-                    <Text style={styles.sectionTitle}>Informations personnelles</Text>
-
-                    <View style={styles.inputContainer}>
-                        <Text style={styles.inputLabel}>Nom complet</Text>
-                        <TextInput
-                            style={styles.textInput}
-                            value={name}
-                            onChangeText={setName}
-                            placeholder="Votre nom"
-                        />
-                    </View>
-
-                    <View style={styles.inputContainer}>
-                        <Text style={styles.inputLabel}>Adresse email</Text>
-                        <TextInput
-                            style={[styles.textInput, { color: '#999' }]}
-                            value={email}
-                            editable={false}
-                            placeholder="Votre email"
-                        />
-                        <Text style={styles.emailHint}>L'email ne peut pas être modifié</Text>
-                    </View>
-
-                    <View style={styles.inputContainer}>
-                        <Text style={styles.inputLabel}>Téléphone</Text>
-                        <TextInput
-                            style={styles.textInput}
-                            value={tel}
-                            onChangeText={setTel}
-                            placeholder="Votre numéro de téléphone"
-                            keyboardType="phone-pad"
-                        />
-                    </View>
-
-                    <View style={styles.inputContainer}>
-                        <Text style={styles.inputLabel}>Département</Text>
-                        <TextInput
-                            style={styles.textInput}
-                            value={depart}
-                            onChangeText={setDepart}
-                            placeholder="Votre département"
-                        />
-                    </View>
-
-                    <View style={styles.inputContainer}>
-                        <Text style={styles.inputLabel}>Niveau</Text>
-                        <TextInput
-                            style={styles.textInput}
-                            value={niveau}
-                            onChangeText={setNiveau}
-                            placeholder="Votre niveau d'études"
-                        />
-                    </View>
-                </View>
-
-                <TouchableOpacity
-                    style={styles.saveButton}
-                    onPress={saveProfile}
-                    disabled={saving}
+                <ScrollView
+                    showsVerticalScrollIndicator={false}
+                    contentContainerStyle={styles.scrollContent}
+                    keyboardShouldPersistTaps="handled"
                 >
-                    <Text style={styles.saveButtonText}>
-                        {saving ? 'Enregistrement...' : 'Enregistrer les modifications'}
-                    </Text>
-                </TouchableOpacity>
-            </ScrollView>
-        </View>
+                    <View style={styles.imageSection}>
+                        <TouchableOpacity onPress={pickImage} style={styles.imageWrapper}>
+                            {imageUri ? (
+                                <Image style={styles.profileLargeImage} source={{ uri: imageUri }} />
+                            ) : (
+                                <View style={styles.placeholderLargeImage}>
+                                    <Ionicons name="person" size={50} color="#CCCCCC" />
+                                </View>
+                            )}
+                            <View style={styles.cameraIconBadge}>
+                                <Ionicons name="camera" size={18} color="#fff" />
+                            </View>
+                        </TouchableOpacity>
+                        <Text style={styles.changeLabel}>{t('change_photo')}</Text>
+                    </View>
+
+                    <View style={styles.formContainer}>
+                        <Text style={styles.groupLabel}>{t('personal_info')}</Text>
+
+                        <View style={styles.inputCard}>
+                            <View style={styles.inputIconWrapper}>
+                                <Ionicons name="person-outline" size={20} color="#FF8A50" />
+                            </View>
+                            <View style={styles.inputMain}>
+                                <Text style={styles.labelSmall}>{t('full_name')}</Text>
+                                <TextInput
+                                    style={styles.inputStyle}
+                                    value={name}
+                                    onChangeText={setName}
+                                    placeholder={t('your_name_placeholder')}
+                                    placeholderTextColor="#A1A1A1"
+                                />
+                            </View>
+                        </View>
+
+                        <View style={[styles.inputCard, styles.disabledCard]}>
+                            <View style={styles.inputIconWrapper}>
+                                <Ionicons name="mail-outline" size={20} color="#8E8E93" />
+                            </View>
+                            <View style={styles.inputMain}>
+                                <Text style={styles.labelSmall}>{t('email_label')}</Text>
+                                <TextInput
+                                    style={[styles.inputStyle, { color: '#8E8E93' }]}
+                                    value={email}
+                                    editable={false}
+                                />
+                            </View>
+                            <Ionicons name="lock-closed" size={14} color="#CECECE" style={{ marginRight: 5 }} />
+                        </View>
+
+                        <View style={styles.inputCard}>
+                            <View style={styles.inputIconWrapper}>
+                                <Ionicons name="call-outline" size={20} color="#4361EE" />
+                            </View>
+                            <View style={styles.inputMain}>
+                                <Text style={styles.labelSmall}>{t('phone_label')}</Text>
+                                <TextInput
+                                    style={styles.inputStyle}
+                                    value={tel}
+                                    onChangeText={setTel}
+                                    placeholder={t('phone_placeholder')}
+                                    keyboardType="phone-pad"
+                                    placeholderTextColor="#A1A1A1"
+                                />
+                            </View>
+                        </View>
+
+                        <View style={styles.inputCard}>
+                            <View style={styles.inputIconWrapper}>
+                                <Ionicons name="business-outline" size={20} color="#EF476F" />
+                            </View>
+                            <View style={styles.inputMain}>
+                                <Text style={styles.labelSmall}>{t('dept_label')}</Text>
+                                <TextInput
+                                    style={styles.inputStyle}
+                                    value={depart}
+                                    onChangeText={setDepart}
+                                    placeholder={t('dept_placeholder')}
+                                    placeholderTextColor="#A1A1A1"
+                                />
+                            </View>
+                        </View>
+
+                        <View style={styles.inputCard}>
+                            <View style={styles.inputIconWrapper}>
+                                <Ionicons name="school-outline" size={20} color="#118AB2" />
+                            </View>
+                            <View style={styles.inputMain}>
+                                <Text style={styles.labelSmall}>{t('level_label')}</Text>
+                                <TextInput
+                                    style={styles.inputStyle}
+                                    value={niveau}
+                                    onChangeText={setNiveau}
+                                    placeholder={t('level_placeholder')}
+                                    placeholderTextColor="#A1A1A1"
+                                />
+                            </View>
+                        </View>
+                    </View>
+
+                    <TouchableOpacity
+                        style={[styles.saveBtnRefined, saving && styles.disabledBtn]}
+                        onPress={saveProfile}
+                        disabled={saving}
+                        activeOpacity={0.8}
+                    >
+                        <Text style={styles.saveBtnText}>
+                            {saving ? t('saving') : t('save_changes')}
+                        </Text>
+                    </TouchableOpacity>
+                </ScrollView>
+            </View>
         </KeyboardAvoidingView>
     );
 }
@@ -177,117 +208,165 @@ export default function EditProfile({ route, navigation }) {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#F9F9F9',
+        backgroundColor: '#F8F9FB',
     },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingHorizontal: 16,
-        paddingTop: 12,
-        paddingBottom: 8,
-        borderBottomWidth: 1,
-        borderBottomColor: '#EEEEEE',
+        paddingHorizontal: 20,
+        paddingTop: 15,
+        paddingBottom: 15,
+        backgroundColor: '#FFFFFF',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 10,
+        elevation: 3,
+        zIndex: 10,
     },
     headerTitle: {
         fontSize: 18,
-        fontWeight: '600',
-        color: '#000000',
+        fontWeight: '800',
+        color: '#1C1C1E',
+        letterSpacing: -0.5,
     },
     backButton: {
-        padding: 8,
-    },
-    scrollView: {
-        flex: 1,
-    },
-    imageContainer: {
-        alignItems: 'center',
-        marginTop: 20,
-        marginBottom: 20,
-    },
-    profileImageContainer: {
-        height: 100,
-        width: 100,
-        borderRadius: 50,
-        backgroundColor: '#f0f0f0',
-        position: 'relative',
-        overflow: 'hidden',
-        marginBottom: 8,
-    },
-    profileImage: {
-        height: 100,
-        width: 100,
-        borderRadius: 50,
-    },
-    placeholderImage: {
-        height: 100,
-        width: 100,
-        borderRadius: 50,
-        backgroundColor: '#F0F0F0',
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        backgroundColor: 'rgba(255, 138, 80, 0.1)',
         justifyContent: 'center',
         alignItems: 'center',
     },
-    cameraButton: {
-        position: 'absolute',
-        bottom: 0,
-        right: 0,
-        backgroundColor: '#FF8A50',
-        borderRadius: 12,
-        padding: 6,
+    scrollContent: {
+        paddingBottom: 40,
+    },
+    imageSection: {
+        alignItems: 'center',
+        marginTop: 30,
+        marginBottom: 30,
+    },
+    imageWrapper: {
+        position: 'relative',
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.25,
-        shadowRadius: 3.84,
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.1,
+        shadowRadius: 15,
         elevation: 5,
     },
-    changePhotoText: {
+    profileLargeImage: {
+        height: 120,
+        width: 120,
+        borderRadius: 60,
+        borderWidth: 4,
+        borderColor: '#FFFFFF',
+    },
+    placeholderLargeImage: {
+        height: 120,
+        width: 120,
+        borderRadius: 60,
+        backgroundColor: '#FFFFFF',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 4,
+        borderColor: '#FFFFFF',
+    },
+    cameraIconBadge: {
+        position: 'absolute',
+        bottom: 5,
+        right: 5,
+        backgroundColor: '#FF8A50',
+        width: 34,
+        height: 34,
+        borderRadius: 17,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 3,
+        borderColor: '#FFFFFF',
+    },
+    changeLabel: {
         fontSize: 14,
         color: '#FF8A50',
-        fontWeight: '500',
+        fontWeight: '800',
+        marginTop: 12,
+        letterSpacing: 0.5,
     },
-    formSection: {
-        marginHorizontal: 16,
+    formContainer: {
+        paddingHorizontal: 20,
     },
-    sectionTitle: {
-        fontSize: 16,
-        fontWeight: '600',
+    groupLabel: {
+        fontSize: 13,
+        fontWeight: '800',
         color: '#8E8E93',
-        marginBottom: 16,
+        textTransform: 'uppercase',
+        letterSpacing: 1.5,
+        marginBottom: 15,
+        marginLeft: 4,
     },
-    inputContainer: {
-        marginBottom: 16,
-    },
-    inputLabel: {
-        fontSize: 14,
-        color: '#8E8E93',
-        marginBottom: 8,
-    },
-    textInput: {
-        backgroundColor: '#FFFFFF',
-        borderRadius: 8,
-        paddingHorizontal: 12,
-        paddingVertical: 10,
-        fontSize: 16,
-        borderWidth: 1,
-        borderColor: '#EEEEEE',
-    },
-    emailHint: {
-        fontSize: 12,
-        color: '#8E8E93',
-        marginTop: 4,
-    },
-    saveButton: {
-        backgroundColor: '#FF8A50',
-        borderRadius: 8,
-        padding: 16,
+    inputCard: {
+        flexDirection: 'row',
         alignItems: 'center',
-        margin: 16,
-        marginTop: 24,
-        marginBottom: 40,
+        backgroundColor: '#FFFFFF',
+        borderRadius: 20,
+        padding: 12,
+        marginBottom: 16,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.04,
+        shadowRadius: 10,
+        elevation: 2,
     },
-    saveButtonText: {
-        color: '#FFFFFF',
+    disabledCard: {
+        backgroundColor: '#F2F2F7',
+        opacity: 0.8,
+    },
+    inputIconWrapper: {
+        width: 44,
+        height: 44,
+        borderRadius: 14,
+        backgroundColor: '#F8F9FA',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 15,
+    },
+    inputMain: {
+        flex: 1,
+    },
+    labelSmall: {
+        fontSize: 11,
+        fontWeight: '700',
+        color: '#8E8E93',
+        textTransform: 'uppercase',
+        marginBottom: 2,
+    },
+    inputStyle: {
         fontSize: 16,
         fontWeight: '600',
+        color: '#1C1C1E',
+        paddingVertical: 2,
+    },
+    saveBtnRefined: {
+        backgroundColor: '#FF8A50',
+        borderRadius: 22,
+        paddingVertical: 18,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginHorizontal: 20,
+        marginTop: 20,
+        shadowColor: '#FF8A50',
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.3,
+        shadowRadius: 12,
+        elevation: 5,
+    },
+    disabledBtn: {
+        opacity: 0.6,
+    },
+    saveBtnText: {
+        color: '#FFFFFF',
+        fontSize: 17,
+        fontWeight: '800',
+        letterSpacing: 0.5,
     },
 });

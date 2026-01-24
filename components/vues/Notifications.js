@@ -4,10 +4,11 @@ import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { doc, onSnapshot, updateDoc, arrayRemove, arrayUnion, Timestamp } from 'firebase/firestore';
 import { db } from '../../config';
 import { UserContext } from '../context/UserContext';
-import WebSocketService from '../utils/WebSocketService';
+import { useTranslation } from '../hooks/useTranslation';
 
 export default function Notifications({ navigation }) {
     const { currentUserNewNav } = useContext(UserContext);
+    const { t } = useTranslation();
     const [notifications, setNotifications] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedNotification, setSelectedNotification] = useState(null);
@@ -15,16 +16,6 @@ export default function Notifications({ navigation }) {
 
     useEffect(() => {
         fetchNotifications();
-
-        // Initialize WebSocket for real-time approval notifications
-        if (currentUserNewNav?.email) {
-            initializeWebSocket(currentUserNewNav.email);
-        }
-
-        return () => {
-            // Cleanup WebSocket on unmount
-            WebSocketService.disconnect();
-        };
     }, [currentUserNewNav?.email]);
 
     const fetchNotifications = () => {
@@ -65,62 +56,6 @@ export default function Notifications({ navigation }) {
         }
     };
 
-    /**
-     * Initialize WebSocket connection for real-time approvals
-     */
-    const initializeWebSocket = (userId) => {
-        try {
-            // Connect to WebSocket server
-            WebSocketService.connect(userId);
-
-            // Handle approval notifications
-            WebSocketService.on('approval', async (data) => {
-                console.log('Approval received:', data);
-
-                // Create approval notification
-                const approvalNotification = {
-                    id: `notif_approval_${Date.now()}`,
-                    type: 'reservation_approved',
-                    title: 'Réservation approuvée',
-                    message: `Votre réservation pour le livre "${data.bookTitle}" a été approuvée par l'administrateur. Le livre est prêt à être retiré.`,
-                    date: Timestamp.now(),
-                    read: false,
-                    bookId: data.bookId,
-                    bookTitle: data.bookTitle,
-                };
-
-                // Add notification to Firestore
-                try {
-                    const userRef = doc(db, 'BiblioUser', userId);
-                    await updateDoc(userRef, {
-                        notifications: arrayUnion(approvalNotification)
-                    });
-
-                    // Show alert to user
-                    Alert.alert(
-                        'Réservation approuvée ✓',
-                        `Le livre "${data.bookTitle}" est prêt à être retiré!`,
-                        [{ text: 'OK' }]
-                    );
-                } catch (error) {
-                    console.error('Erreur lors de l\'ajout de la notification:', error);
-                }
-            });
-
-            // Handle disconnection
-            WebSocketService.on('disconnected', () => {
-                console.log('WebSocket disconnected');
-            });
-
-            // Handle errors
-            WebSocketService.on('error', (error) => {
-                console.error('WebSocket error:', error);
-            });
-
-        } catch (error) {
-            console.error('Error initializing WebSocket:', error);
-        }
-    };
 
     const markAllAsRead = async () => {
         if (!currentUserNewNav?.email || notifications.length === 0) return;
@@ -139,10 +74,10 @@ export default function Notifications({ navigation }) {
                 notifications: updatedNotifications
             });
 
-            Alert.alert('Succès', 'Toutes les notifications ont été marquées comme lues');
+            Alert.alert(t('success'), t('mark_all_success'));
         } catch (error) {
             console.error('Erreur lors du marquage des notifications:', error);
-            Alert.alert('Erreur', 'Impossible de marquer les notifications comme lues');
+            Alert.alert(t('error'), t('mark_all_error'));
         } finally {
             setLoading(false);
         }
@@ -173,12 +108,12 @@ export default function Notifications({ navigation }) {
         if (!currentUserNewNav?.email) return;
 
         Alert.alert(
-            'Supprimer la notification',
-            'Voulez-vous vraiment supprimer cette notification ?',
+            t('delete_notif_title'),
+            t('delete_notif_msg'),
             [
-                { text: 'Annuler', style: 'cancel' },
+                { text: t('cancel'), style: 'cancel' },
                 {
-                    text: 'Supprimer',
+                    text: t('delete'),
                     style: 'destructive',
                     onPress: async () => {
                         try {
@@ -186,10 +121,10 @@ export default function Notifications({ navigation }) {
                             await updateDoc(userRef, {
                                 notifications: arrayRemove(notificationToDelete)
                             });
-                            Alert.alert('Succès', 'Notification supprimée');
+                            Alert.alert(t('success'), t('delete_notif_success'));
                         } catch (error) {
                             console.error('Erreur lors de la suppression:', error);
-                            Alert.alert('Erreur', 'Impossible de supprimer la notification');
+                            Alert.alert(t('error'), t('delete_notif_error'));
                         }
                     }
                 }
@@ -201,12 +136,12 @@ export default function Notifications({ navigation }) {
         if (!currentUserNewNav?.email || notifications.length === 0) return;
 
         Alert.alert(
-            'Tout supprimer',
-            'Voulez-vous vraiment supprimer toutes les notifications ?',
+            t('delete_all_confirm_title'),
+            t('delete_all_confirm_msg'),
             [
-                { text: 'Annuler', style: 'cancel' },
+                { text: t('cancel'), style: 'cancel' },
                 {
-                    text: 'Tout supprimer',
+                    text: t('delete_all'),
                     style: 'destructive',
                     onPress: async () => {
                         try {
@@ -216,10 +151,10 @@ export default function Notifications({ navigation }) {
                             await updateDoc(userRef, {
                                 notifications: []
                             });
-                            Alert.alert('Succès', 'Toutes les notifications ont été supprimées');
+                            Alert.alert(t('success'), t('delete_all_success'));
                         } catch (error) {
                             console.error('Erreur lors de la suppression de toutes les notifications:', error);
-                            Alert.alert('Erreur', 'Impossible de supprimer les notifications');
+                            Alert.alert(t('error'), t('delete_all_error'));
                         } finally {
                             setLoading(false);
                         }
@@ -275,13 +210,13 @@ export default function Notifications({ navigation }) {
         const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
         if (diffMins < 1) {
-            return 'À l\'instant';
+            return t('just_now');
         } else if (diffMins < 60) {
-            return `Il y a ${diffMins} minute${diffMins > 1 ? 's' : ''}`;
+            return (t('mins_ago') || 'Il y a {{count}} minute(s)').replace('{{count}}', diffMins);
         } else if (diffHours < 24) {
-            return `Il y a ${diffHours} heure${diffHours > 1 ? 's' : ''}`;
+            return (t('hours_ago') || 'Il y a {{count}} heure(s)').replace('{{count}}', diffHours);
         } else if (diffDays < 7) {
-            return `Il y a ${diffDays} jour${diffDays > 1 ? 's' : ''}`;
+            return (t('days_ago') || 'Il y a {{count}} jour(s)').replace('{{count}}', diffDays);
         } else {
             return date.toLocaleDateString('fr-FR');
         }
@@ -289,9 +224,11 @@ export default function Notifications({ navigation }) {
 
     const renderEmptyList = () => (
         <View style={styles.emptyContainer}>
-            <Ionicons name="notifications-off-outline" size={60} color="#CCCCCC" />
-            <Text style={styles.emptyText}>Aucune notification</Text>
-            <Text style={styles.emptySubText}>Vous recevrez des notifications concernant vos emprunts et les nouveautés</Text>
+            <View style={styles.emptyIconCircle}>
+                <Ionicons name="notifications-off-outline" size={50} color="#FF8A50" />
+            </View>
+            <Text style={styles.emptyText}>{t('no_notifications')}</Text>
+            <Text style={styles.emptySubText}>{t('no_notifications_sub')}</Text>
         </View>
     );
 
@@ -301,39 +238,56 @@ export default function Notifications({ navigation }) {
 
         return (
             <TouchableOpacity
-                style={[styles.notificationItem, item.read ? {} : styles.unreadItem]}
+                style={[
+                    styles.notificationCard,
+                    !item.read && styles.unreadCard
+                ]}
                 onPress={() => openNotificationModal(item)}
+                activeOpacity={0.7}
             >
-                <View style={[styles.iconContainer, { backgroundColor: item.read ? '#F2F2F7' : '#E5F3FF' }]}>
+                <View style={[
+                    styles.iconCircle,
+                    { backgroundColor: !item.read ? 'rgba(255, 138, 80, 0.1)' : '#F2F2F7' }
+                ]}>
                     {getNotificationIcon(item.type)}
+                    {!item.read && <View style={styles.unreadStatusIndicator} />}
                 </View>
-                <View style={styles.notificationContent}>
-                    <Text style={[styles.notificationTitle, item.read ? {} : styles.unreadText]}>
-                        {item.title}
-                    </Text>
-                    <Text style={styles.notificationMessage} numberOfLines={isLongMessage ? 3 : 2}>
+
+                <View style={styles.cardMainContent}>
+                    <View style={styles.cardHeaderRow}>
+                        <Text
+                            style={[styles.cardTitleText, !item.read && styles.boldText]}
+                            numberOfLines={1}
+                        >
+                            {item.title}
+                        </Text>
+                        <Text style={styles.cardDateText}>
+                            {formatDate(item.date)}
+                        </Text>
+                    </View>
+
+                    <Text
+                        style={[styles.cardMessageText, !item.read && styles.unreadMessageText]}
+                        numberOfLines={2}
+                    >
                         {displayMessage}
                     </Text>
-                    {isLongMessage && (
-                        <Text style={styles.seeMoreText}>Appuyer pour voir plus</Text>
-                    )}
-                    <Text style={styles.notificationDate}>
-                        {formatDate(item.date)}
-                    </Text>
-                </View>
-                <View style={styles.notificationActions}>
-                    {!item.read && (
-                        <View style={styles.unreadDot} />
-                    )}
-                    <TouchableOpacity
-                        style={styles.deleteButton}
-                        onPress={(e) => {
-                            e.stopPropagation();
-                            deleteNotification(item);
-                        }}
-                    >
-                        <Ionicons name="trash-outline" size={18} color="#FF3B30" />
-                    </TouchableOpacity>
+
+                    <View style={styles.cardFooter}>
+                        {isLongMessage && (
+                            <Text style={styles.readMorePill}>{t('tap_to_see_more')}</Text>
+                        )}
+                        <View style={{ flex: 1 }} />
+                        <TouchableOpacity
+                            style={styles.cardDeleteBtn}
+                            onPress={(e) => {
+                                e.stopPropagation();
+                                deleteNotification(item);
+                            }}
+                        >
+                            <Ionicons name="trash-outline" size={16} color="#FF3B30" />
+                        </TouchableOpacity>
+                    </View>
                 </View>
             </TouchableOpacity>
         );
@@ -381,14 +335,14 @@ export default function Notifications({ navigation }) {
                             }}
                         >
                             <Ionicons name="trash-outline" size={20} color="#FF3B30" />
-                            <Text style={styles.modalDeleteText}>Supprimer</Text>
+                            <Text style={styles.modalDeleteText}>{t('delete')}</Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity
                             style={styles.modalCloseBtn}
                             onPress={() => setModalVisible(false)}
                         >
-                            <Text style={styles.modalCloseBtnText}>Fermer</Text>
+                            <Text style={styles.modalCloseBtnText}>{t('close')}</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -404,11 +358,11 @@ export default function Notifications({ navigation }) {
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
                     <Ionicons name="arrow-back" size={24} color="#FF8A50" />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Notifications</Text>
+                <Text style={styles.headerTitle}>{t('notifications_title')}</Text>
                 <View style={styles.headerActions}>
                     {unreadCount > 0 && (
                         <TouchableOpacity onPress={markAllAsRead} style={styles.markAllButton}>
-                            <Text style={styles.markAllText}>Tout marquer</Text>
+                            <Text style={styles.markAllText}>{t('mark_all_read')}</Text>
                         </TouchableOpacity>
                     )}
                     {notifications.length > 0 && (
@@ -429,7 +383,11 @@ export default function Notifications({ navigation }) {
                     keyExtractor={(item, index) => item.id || index.toString()}
                     renderItem={renderItem}
                     ListEmptyComponent={renderEmptyList}
-                    contentContainerStyle={notifications.length === 0 ? { flex: 1 } : {}}
+                    contentContainerStyle={[
+                        styles.listContent,
+                        notifications.length === 0 ? { flex: 1 } : {}
+                    ]}
+                    showsVerticalScrollIndicator={false}
                 />
             )}
 
@@ -441,209 +399,305 @@ export default function Notifications({ navigation }) {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#F9F9F9',
+        backgroundColor: '#F8F9FB',
     },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingHorizontal: 16,
-        paddingTop: 12,
-        paddingBottom: 8,
-        borderBottomWidth: 1,
-        borderBottomColor: '#EEEEEE',
+        paddingHorizontal: 20,
+        paddingTop: 15,
+        paddingBottom: 15,
+        backgroundColor: '#FFFFFF',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 10,
+        elevation: 3,
+        zIndex: 10,
     },
     headerTitle: {
-        fontSize: 18,
-        fontWeight: '600',
-        color: '#000000',
+        fontSize: 20,
+        fontWeight: '800',
+        color: '#1C1C1E',
         flex: 1,
         textAlign: 'center',
+        letterSpacing: -0.5,
     },
     headerActions: {
         flexDirection: 'row',
         alignItems: 'center',
+        width: 80,
+        justifyContent: 'flex-end',
     },
     backButton: {
-        padding: 8,
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: 'rgba(255, 138, 80, 0.1)',
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     markAllButton: {
-        padding: 8,
-        marginRight: 4,
-    },
-    deleteAllButton: {
-        padding: 8,
+        paddingVertical: 6,
+        paddingHorizontal: 12,
+        borderRadius: 14,
+        backgroundColor: 'rgba(255, 138, 80, 0.1)',
+        marginRight: 8,
     },
     markAllText: {
-        fontSize: 14,
+        fontSize: 12,
         color: '#FF8A50',
-        fontWeight: '500',
+        fontWeight: '700',
+    },
+    deleteAllButton: {
+        width: 36,
+        height: 36,
+        borderRadius: 10,
+        backgroundColor: 'rgba(255, 59, 48, 0.1)',
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     loadingContainer: {
         flex: 1,
         justifyContent: 'center',
+        alignItems: 'center',
+    },
+    listContent: {
+        paddingHorizontal: 16,
+        paddingTop: 16,
+        paddingBottom: 30,
     },
     emptyContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        padding: 20,
+        paddingHorizontal: 40,
+    },
+    emptyIconCircle: {
+        width: 100,
+        height: 100,
+        borderRadius: 50,
+        backgroundColor: '#FFFFFF',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 20,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.05,
+        shadowRadius: 15,
+        elevation: 2,
     },
     emptyText: {
-        fontSize: 18,
-        fontWeight: '600',
-        color: '#8E8E93',
-        marginTop: 16,
-    },
-    emptySubText: {
-        fontSize: 14,
-        color: '#8E8E93',
+        fontSize: 22,
+        fontWeight: '800',
+        color: '#1C1C1E',
         textAlign: 'center',
-        marginTop: 8,
-    },
-    notificationItem: {
-        flexDirection: 'row',
-        backgroundColor: '#FFFFFF',
-        paddingVertical: 12,
-        paddingHorizontal: 16,
-        borderBottomWidth: 1,
-        borderBottomColor: '#F2F2F7',
-        alignItems: 'flex-start',
-    },
-    unreadItem: {
-        backgroundColor: '#F8F9FF',
-    },
-    iconContainer: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginRight: 12,
-        marginTop: 4,
-    },
-    notificationContent: {
-        flex: 1,
-        paddingRight: 8,
-    },
-    notificationTitle: {
-        fontSize: 16,
-        fontWeight: '500',
-        color: '#000000',
-        marginBottom: 4,
-    },
-    unreadText: {
-        fontWeight: '600',
-    },
-    notificationMessage: {
-        fontSize: 14,
-        color: '#666666',
-        marginBottom: 6,
-        lineHeight: 20,
-    },
-    seeMoreText: {
-        fontSize: 12,
-        color: '#FF8A50',
-        fontStyle: 'italic',
-        marginBottom: 4,
-    },
-    notificationDate: {
-        fontSize: 12,
-        color: '#8E8E93',
-    },
-    notificationActions: {
-        alignItems: 'center',
-        justifyContent: 'flex-start',
-        paddingTop: 4,
-    },
-    unreadDot: {
-        width: 10,
-        height: 10,
-        borderRadius: 5,
-        backgroundColor: '#FF8A50',
         marginBottom: 8,
     },
-    deleteButton: {
-        padding: 8,
+    emptySubText: {
+        fontSize: 15,
+        color: '#8E8E93',
+        textAlign: 'center',
+        lineHeight: 22,
     },
-    // Modal styles
-    modalOverlay: {
-        flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.5)',
+    notificationCard: {
+        flexDirection: 'row',
+        backgroundColor: '#FFFFFF',
+        borderRadius: 24,
+        padding: 16,
+        marginBottom: 14,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.04,
+        shadowRadius: 12,
+        elevation: 2,
+        alignItems: 'flex-start',
+    },
+    unreadCard: {
+        backgroundColor: '#FFFFFF',
+        borderLeftWidth: 4,
+        borderLeftColor: '#FF8A50',
+    },
+    iconCircle: {
+        width: 48,
+        height: 48,
+        borderRadius: 24,
         justifyContent: 'center',
         alignItems: 'center',
+        marginRight: 16,
+        position: 'relative',
+    },
+    unreadStatusIndicator: {
+        position: 'absolute',
+        top: 0,
+        right: 0,
+        width: 12,
+        height: 12,
+        borderRadius: 6,
+        backgroundColor: '#FF8A50',
+        borderWidth: 2,
+        borderColor: '#FFFFFF',
+    },
+    cardMainContent: {
+        flex: 1,
+    },
+    cardHeaderRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 4,
+    },
+    cardTitleText: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#1C1C1E',
+        flex: 1,
+        marginRight: 8,
+    },
+    boldText: {
+        fontWeight: '800',
+    },
+    cardDateText: {
+        fontSize: 12,
+        color: '#8E8E93',
+        fontWeight: '500',
+    },
+    cardMessageText: {
+        fontSize: 14,
+        color: '#666666',
+        lineHeight: 20,
+        marginBottom: 10,
+    },
+    unreadMessageText: {
+        color: '#1C1C1E',
+        fontWeight: '500',
+    },
+    cardFooter: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    readMorePill: {
+        fontSize: 11,
+        fontWeight: '700',
+        color: '#FF8A50',
+        backgroundColor: 'rgba(255, 138, 80, 0.1)',
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 10,
+    },
+    cardDeleteBtn: {
+        padding: 6,
+        borderRadius: 8,
+        backgroundColor: 'rgba(255, 59, 48, 0.05)',
+    },
+    // Modal styles refined
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.6)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20,
     },
     modalContent: {
         backgroundColor: '#FFFFFF',
-        borderRadius: 16,
-        width: '90%',
-        maxHeight: '80%',
-        overflow: 'hidden',
+        borderRadius: 30,
+        width: '100%',
+        maxHeight: '70%',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.1,
+        shadowRadius: 20,
+        elevation: 10,
     },
     modalHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        padding: 16,
+        padding: 24,
         borderBottomWidth: 1,
         borderBottomColor: '#F2F2F7',
     },
     modalTitle: {
-        fontSize: 18,
-        fontWeight: '600',
-        color: '#000000',
+        fontSize: 20,
+        fontWeight: '800',
+        color: '#1C1C1E',
         flex: 1,
+        letterSpacing: -0.5,
     },
     modalCloseButton: {
-        padding: 4,
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        backgroundColor: '#F2F2F7',
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     modalBody: {
-        padding: 16,
-        maxHeight: 400,
+        padding: 24,
     },
     modalIconContainer: {
         alignItems: 'center',
-        marginBottom: 16,
+        marginBottom: 20,
+        width: 70,
+        height: 70,
+        borderRadius: 35,
+        backgroundColor: 'rgba(255, 138, 80, 0.1)',
+        justifyContent: 'center',
+        alignSelf: 'center',
     },
     modalMessage: {
-        fontSize: 16,
-        color: '#333333',
-        lineHeight: 24,
-        marginBottom: 16,
+        fontSize: 17,
+        color: '#3A3A3C',
+        lineHeight: 26,
+        textAlign: 'center',
+        marginBottom: 15,
     },
     modalDate: {
         fontSize: 14,
         color: '#8E8E93',
         textAlign: 'center',
+        fontWeight: '600',
     },
     modalFooter: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        padding: 16,
+        padding: 24,
         borderTopWidth: 1,
         borderTopColor: '#F2F2F7',
+        gap: 12,
     },
     modalDeleteButton: {
+        flex: 1,
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#FF3B3020',
-        paddingVertical: 8,
-        paddingHorizontal: 12,
-        borderRadius: 8,
+        justifyContent: 'center',
+        backgroundColor: 'rgba(255, 59, 48, 0.1)',
+        paddingVertical: 14,
+        borderRadius: 18,
     },
     modalDeleteText: {
         color: '#FF3B30',
-        marginLeft: 4,
-        fontWeight: '500',
+        marginLeft: 8,
+        fontWeight: '800',
+        fontSize: 15,
     },
     modalCloseBtn: {
+        flex: 1,
         backgroundColor: '#FF8A50',
-        paddingVertical: 8,
-        paddingHorizontal: 16,
-        borderRadius: 8,
+        paddingVertical: 14,
+        borderRadius: 18,
+        alignItems: 'center',
+        justifyContent: 'center',
+        shadowColor: '#FF8A50',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 4,
     },
     modalCloseBtnText: {
         color: '#FFFFFF',
-        fontWeight: '600',
+        fontWeight: '800',
+        fontSize: 15,
     },
 });

@@ -229,7 +229,7 @@ const SearchModal = ({ visible, onClose, navigation }) => {
       setSearchQuery(''); // Réinitialiser la recherche
       setSearchResults([]); // Réinitialiser les résultats
       navigation.navigate('Produit', {
-        nomBD: book.nomBD || '',
+        nomBD: book.id || '',
         image: book.image || null,
         name: bookName,
         desc: book.desc || '',

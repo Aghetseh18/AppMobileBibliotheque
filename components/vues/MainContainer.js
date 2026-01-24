@@ -8,7 +8,8 @@ import { collection, getDocs, doc, updateDoc, query, where, limit, onSnapshot } 
 import { UserContext } from '../context/UserContext';
 import { useCartCount } from '../utils/cart';
 import { useUnreadChatCount } from '../utils/chat';
-import SearchModal from '../composants/SearchModal';
+import { useNotificationCount } from '../hooks/useNotificationCount';
+import { useTranslation } from '../hooks/useTranslation';
 
 
 //Screens
@@ -53,16 +54,17 @@ const WIDTH = Dimensions.get('window').width
 const Tab = createBottomTabNavigator();
 
 const MainContainer = ({ navigation, route }) => {
+  const { t } = useTranslation();
   const { emailHigh, currentUserNewNav } = useContext(UserContext);
   const cartCount = useCartCount(currentUserNewNav?.email);
   const [modal, setModal] = useState(false);
   const [datUser1, setDatUser1] = useState(route.params?.datUser || null);
   const [VuePartCours, setPartVueCours] = useState("");
   const [signalMain, setSignalMain] = useState(false)
-  const [searchModalVisible, setSearchModalVisible] = useState(false);
   const [data, setData] = useState([]);
   const [loader, setLoader] = useState(true);
   const unreadChatCount = useUnreadChatCount(currentUserNewNav?.email);
+  const unreadNotificationCount = useNotificationCount(currentUserNewNav?.email);
 
 
   const screenOptions = ({ route }) => ({
@@ -183,6 +185,7 @@ const MainContainer = ({ navigation, route }) => {
             name={homeName}
             component={NavShop}
             options={{
+              tabBarLabel: t('tab_home'),
               headerTitle: (props) => (
                 <SafeAreaView>
                   <View style={styles.headerContainer}>
@@ -191,19 +194,25 @@ const MainContainer = ({ navigation, route }) => {
                         style={styles.logo}
                         source={require('../../assets/enspy.jpg')}
                       />
-                      <Text style={styles.title}>BIBLIO ENSPY</Text>
+                      <Text style={styles.title}>{t('app_title')}</Text>
                     </View>
                     <TouchableOpacity onPress={handlePress}>
                       <FontAwesome name="google" size={24} color="blue" />
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={() => setSearchModalVisible(true)}>
-                      <Ionicons name="search-outline" size={24} color="black" />
-                    </TouchableOpacity>
+
                     <TouchableOpacity onPress={() => navigation.navigate('Panier')} style={styles.cartButton}>
                       <Ionicons name="cart-outline" size={24} color="black" />
                       {cartCount > 0 && (
                         <View style={styles.cartBadge}>
                           <Text style={styles.cartBadgeText}>{cartCount}</Text>
+                        </View>
+                      )}
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => navigation.navigate('Notifications')} style={styles.notificationButton}>
+                      <Ionicons name="notifications-outline" size={24} color="black" />
+                      {unreadNotificationCount > 0 && (
+                        <View style={styles.notificationBadge}>
+                          <Text style={styles.notificationBadgeText}>{unreadNotificationCount}</Text>
                         </View>
                       )}
                     </TouchableOpacity>
@@ -219,6 +228,7 @@ const MainContainer = ({ navigation, route }) => {
             name={homeName}
             component={NavShop}
             options={{
+              tabBarLabel: t('tab_home'),
               headerTitle: (props) => (
                 <SafeAreaView>
                   <View style={styles.headerContainer}>
@@ -227,14 +237,12 @@ const MainContainer = ({ navigation, route }) => {
                         style={styles.logo}
                         source={require('../../assets/enspy.jpg')}
                       />
-                      <Text style={styles.title}>E N S P Y</Text>
+                      <Text style={styles.title}>{t('app_title_alt')}</Text>
                     </View>
                     <TouchableOpacity onPress={handlePress}>
                       <FontAwesome name="google" size={24} color="blue" />
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={() => setSearchModalVisible(true)}>
-                      <Ionicons name="search-outline" size={24} color="black" />
-                    </TouchableOpacity>
+
                     <TouchableOpacity
                       onPress={() => navigation.navigate('Panier')}
                       style={styles.cartIconContainer}
@@ -246,6 +254,17 @@ const MainContainer = ({ navigation, route }) => {
                         </View>
                       )}
                     </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => navigation.navigate('Notifications')}
+                      style={styles.notificationIconContainer}
+                    >
+                      <Ionicons name="notifications-outline" size={24} color="black" />
+                      {unreadNotificationCount > 0 && (
+                        <View style={styles.notificationBadgeSmall}>
+                          <Text style={styles.notificationBadgeTextSmall}>{unreadNotificationCount}</Text>
+                        </View>
+                      )}
+                    </TouchableOpacity>
                   </View>
                 </SafeAreaView>
               ),
@@ -254,16 +273,31 @@ const MainContainer = ({ navigation, route }) => {
             }}
           />
         )}
-        <Tab.Screen name={settingsName} component={NavElearning} />
-        <Tab.Screen name={messagesName} component={Email} />
-        <Tab.Screen name={detailsName} component={NavParams} />
+        <Tab.Screen
+          name={settingsName}
+          component={NavElearning}
+          options={{ tabBarLabel: t('tab_elearning') }}
+        />
+        <Tab.Screen
+          name={messagesName}
+          component={Email}
+          options={{ tabBarLabel: t('tab_chat') }}
+        />
+        <Tab.Screen
+          name={detailsName}
+          component={NavParams}
+          options={{ tabBarLabel: t('tab_settings') }}
+        />
       </Tab.Navigator>
 
-      <SearchModal
-        visible={searchModalVisible}
-        onClose={() => setSearchModalVisible(false)}
-        navigation={navigation}
-      />
+      {/* Chatbot FAB */}
+      <TouchableOpacity
+        style={styles.chatbotFab}
+        onPress={() => navigation.navigate('ChatBot')}
+        activeOpacity={0.8}
+      >
+        <Ionicons name="chatbubbles" size={28} color="#FFF" />
+      </TouchableOpacity>
     </React.Fragment>
   );
 }
@@ -376,9 +410,69 @@ const styles = StyleSheet.create({
   },
   badgeText: {
     color: 'white',
+    fontWeight: 'bold',
+  },
+  // Notification styles
+  notificationButton: {
+    position: 'relative',
+  },
+  notificationBadge: {
+    position: 'absolute',
+    top: -8,
+    right: -8,
+    backgroundColor: '#FF3B30',
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
+  notificationBadgeText: {
+    color: '#fff',
     fontSize: 12,
     fontWeight: 'bold',
   },
+  notificationIconContainer: {
+    position: 'relative',
+    padding: 5,
+  },
+  notificationBadgeSmall: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    backgroundColor: '#FF3B30',
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+  },
+  notificationBadgeTextSmall: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 10,
+  },
+  // Chatbot FAB Styles
+  chatbotFab: {
+    position: 'absolute',
+    bottom: 200, // Positioned higher to avoid blocking
+    right: 20,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#FF8A50',
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4.65,
+    zIndex: 999,
+  }
 });
 
 export default MainContainer;

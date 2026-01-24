@@ -4,10 +4,12 @@ import BigRect from '../BigRect';
 import { UserContextNavApp } from '../../navigation/NavApp';
 import { collection, query, orderBy, onSnapshot, getDocs } from 'firebase/firestore';
 import { db } from '../../../config';
+import { useTranslation } from '../../hooks/useTranslation';
 
 const WIDTH = Dimensions.get('window').height;
 
 const Cathegorie = ({ route, navigation }) => {
+  const { t } = useTranslation();
   const { cathegorie } = route.params || {};
   const { currentUserdata } = useContext(UserContextNavApp) || {};
   const [data, setData] = useState([]);
@@ -116,7 +118,7 @@ const Cathegorie = ({ route, navigation }) => {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
         <ActivityIndicator size="large" color="#0000ff" />
-        <Text style={{ marginTop: 10 }}>Chargement en cours...</Text>
+        <Text style={{ marginTop: 10 }}>{t('loading')}</Text>
       </View>
     );
   }
@@ -124,16 +126,17 @@ const Cathegorie = ({ route, navigation }) => {
   if (!currentUserdata?.email) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <Text>Veuillez vous connecter pour accéder à cette page</Text>
+        <Text>{t('login_required_msg')}</Text>
       </View>
     );
   }
 
   if (data.length === 0) {
+    const itemType = cathegorie?.toLowerCase().includes('memoire') ? t('tab_theses_label') : t('tab_books_label');
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
         <Text style={{ fontSize: 18, textAlign: 'center', color: '#666' }}>
-          Aucun {cathegorie?.toLowerCase().includes('memoire') ? 'mémoire' : 'livre'} trouvé dans cette catégorie
+          {t('no_items_found_category', { itemType })}
         </Text>
       </View>
     );
@@ -154,7 +157,7 @@ const Cathegorie = ({ route, navigation }) => {
           marginTop: 10,
           fontSize: 20
         }}>
-          {cathegorie || 'Catégorie non spécifiée'}
+          {t(cathegorie) || t('uncategorized')}
         </Text>
       </View>
       <View style={{
@@ -176,7 +179,7 @@ const Cathegorie = ({ route, navigation }) => {
             image={item.image}
             salle={item.salle}
             commentaire={item.commentaire || []}
-            nomBD={item.collection || 'Memoire'}
+            nomBD={item.id}
             // Champs spécifiques BiblioThesis
             annee={item.annee}
             superviseur={item.superviseur}

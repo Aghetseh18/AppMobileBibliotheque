@@ -8,7 +8,7 @@ import {
 import { GEMINI_API_KEY } from "@env";
 
 // REPLACE WITH YOUR NEW API KEY from https://aistudio.google.com/app/apikey
-const apiKey = GEMINI_API_KEY;
+const apiKey = "AIzaSyCDttAJtVbCh2hRjNI0-g0dwqBL3WmOt7U";
 const genAI = new GoogleGenerativeAI(apiKey);
 
 const model = genAI.getGenerativeModel({
@@ -39,125 +39,90 @@ async function run(prompt) {
 }
 
 // NOUVELLE FONCTION : Pour le chatbot bibliothèque AVEC CONTEXTE TEMPOREL
-export async function runLibraryBot(userQuestion, conversationHistory = []) {
-    // RÉCUPÉRER L'HEURE ACTUELLE (LOCALE DE L'UTILISATEUR)
+// NOUVELLE FONCTION : Pour le chatbot bibliothèque AVEC CONTEXTE TEMPOREL ET RAG
+export async function runLibraryBot(userQuestion, conversationHistory = [], libraryContext = null) {
+    // RÉCUPÉRER L'HEURE ACTUELLE
     const now = new Date();
-
-    // FORCER L'HEURE LOCALE (pas UTC)
     const localTime = new Date(now.getTime() - (now.getTimezoneOffset() * 60000));
 
     const timeInfo = {
         hour: localTime.getHours(),
-        minute: localTime.getMinutes(),
+        timeString: localTime.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
         day: localTime.toLocaleDateString('fr-FR', { weekday: 'long' }),
-        date: localTime.toLocaleDateString('fr-FR', {
-            day: 'numeric',
-            month: 'long',
-            year: 'numeric'
-        }),
-        timeString: localTime.toLocaleTimeString('fr-FR', {
-            hour: '2-digit',
-            minute: '2-digit'
-        })
+        date: localTime.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
     };
 
-    console.log('=== DEBUG HEURE ===');
-    console.log('Heure détectée:', timeInfo.hour);
-    console.log('Heure complète:', timeInfo.timeString);
-
     // DÉTERMINER LE MOMENT DE LA JOURNÉE
-    let greeting = "Bonjour";
-    let timeContext = "";
-
-    if (timeInfo.hour >= 5 && timeInfo.hour < 12) {
-        greeting = "Bonjour";
-        timeContext = "ce matin";
-    } else if (timeInfo.hour >= 12 && timeInfo.hour < 18) {
-        greeting = "Bonjour";
-        timeContext = "cet après-midi";
-    } else if (timeInfo.hour >= 18 && timeInfo.hour < 22) {
-        greeting = "Bonsoir";
-        timeContext = "ce soir";
-    } else {
-        greeting = "Bonsoir";
-        timeContext = "cette nuit";
-    }
-
-    console.log('Salutation choisie:', greeting);
-
-    if (timeInfo.hour >= 5 && timeInfo.hour < 12) {
-        greeting = "Bonjour";
-        timeContext = "ce matin";
-    } else if (timeInfo.hour >= 12 && timeInfo.hour < 18) {
-        greeting = "Bonjour";
-        timeContext = "cet après-midi";
-    } else if (timeInfo.hour >= 18 && timeInfo.hour < 22) {
-        greeting = "Bonsoir";
-        timeContext = "ce soir";
-    } else {
-        greeting = "Bonsoir";
-        timeContext = "cette nuit";
-    }
+    let greeting = timeInfo.hour >= 5 && timeInfo.hour < 18 ? "Bonjour" : "Bonsoir";
+    let timeContext = timeInfo.hour >= 5 && timeInfo.hour < 12 ? "ce matin" :
+        timeInfo.hour >= 12 && timeInfo.hour < 18 ? "cet après-midi" : "ce soir";
 
     // ANALYSER LE CONTEXTE DE LA CONVERSATION
     const userMessageLower = userQuestion.toLowerCase();
-    const isGreeting = userMessageLower.includes - ('bonjour') ||
-        userMessageLower.includes('bonsoir') ||
-        userMessageLower.includes('salut') ||
-        userMessageLower.includes('hello') ||
-        userMessageLower.includes('hi');
-
-    // VÉRIFIER SI C'EST LA PREMIÈRE INTERACTION (historique vide ou très court)
+    const isGreeting = userMessageLower.includes('bonjour') || userMessageLower.includes('bonsoir') || userMessageLower.includes('salut');
     const isFirstInteraction = !conversationHistory || conversationHistory.length <= 2;
-
-    // DÉTERMINER S'IL FAUT SALUER
     const shouldGreet = isGreeting || isFirstInteraction;
 
-    const systemPrompt = `Tu es l'assistant virtuel d'une bibliothèque universitaire francophone.
+    // CONSTRUIRE LE BLOC DE DONNÉES RÉCUPÉRÉES (RAG)
+    let ragContext = "";
+    if (libraryContext) {
+        ragContext = `\nDONNÉES RÉELLES RÉCUPÉRÉES DE LA BASE DE DONNÉES (Source de vérité) :
+- Institution : ${libraryContext.libraryInfo?.Name || 'La bibliothèque'}
+- Horaires : ${JSON.stringify(libraryContext.libraryInfo?.OpeningHours || {})}
+- Contact : ${JSON.stringify(libraryContext.libraryInfo?.Contact || {})}
+- Règles : Max emprunts=${libraryContext.libraryInfo?.MaximumSimultaneousLoans}, Pénalités=${JSON.stringify(libraryContext.libraryInfo?.LateReturnPenalties)}
+`;
 
-CONTEXTE TEMPOREL ACTUEL :
-- Heure actuelle : ${timeInfo.timeString}
-- Jour : ${timeInfo.day}
-- Date : ${timeInfo.date}
-- Moment : ${timeContext}
-- Salutation appropriée : ${greeting}
-
-CONTEXTE DE LA CONVERSATION :
-- L'utilisateur dit : "${userQuestion}"
-- Est-ce une salutation de l'utilisateur ? ${isGreeting ? 'Oui' : 'Non'}
-- Dois-je saluer ? ${shouldGreet ? 'Oui' : 'Non'}
-- Nombre de messages dans l'historique : ${conversationHistory ? conversationHistory.length : 0}
-
-CONTEXTE DE LA BIBLIOTHÈQUE :
-- Services : Emprunts de livres, réservations, recherche documentaire
-- Départements : Génie Électrique, Informatique, Mécanique, Télécommunications  
-- Durée d'emprunt : 2 semaines
-- Application : BiblioApp pour étudiants
-
-INSTRUCTIONS IMPORTANTES :
-- ${shouldGreet ? `Commence par "${greeting} !" puis réponds à la question` : 'Ne salue PAS, réponds directement à la question'}
-- Sois naturel et conversationnel, comme un vrai bibliothécaire
-- Adapte ton langage au moment de la journée si pertinent
-- Réponds en français, de manière amicale et professionnelle
-- Sois concis (2-3 phrases maximum)
-- Donne des conseils pratiques
-- Si tu ne sais pas quelque chose de spécifique, recommande de contacter la bibliothécaire
-
-EXEMPLES DE RÉPONSES :
-${shouldGreet ?
-            `- Si salutation nécessaire : "${greeting} ! Comment puis-je vous aider ?"` :
-            `- Réponse directe sans salutation : "Bien sûr, je peux vous aider avec..."`
+        if (libraryContext.booksFound?.length > 0) {
+            ragContext += `\nLIVRES TROUVÉS DANS LE CATALOGUE :\n${libraryContext.booksFound.map(b => `- ${b.title} (${b.author}), Cat: ${b.category}, Dispo: ${b.available ? 'OUI' : 'NON'} (${b.count} expl)`).join('\n')}`;
         }
 
-Question de l'étudiant : ${userQuestion}`;
+        if (libraryContext.thesisFound?.length > 0) {
+            ragContext += `\nMÉMOIRES TROUVÉS DANS LE CATALOGUE :\n${libraryContext.thesisFound.map(t => `- ${t.title}, Dept: ${t.category}`).join('\n')}`;
+        }
+
+        if (!libraryContext.matchFound) {
+            ragContext += "\nREMARQUE : Aucune donnée spécifique n'a été trouvée dans la base de données pour cette requête.";
+        }
+    }
+
+    const systemPrompt = `Tu es l'assistant virtuel expert de la bibliothèque universitaire.
+
+CONTEXTE TEMPOREL : ${timeInfo.day} ${timeInfo.date}, ${timeInfo.timeString} (${timeContext}).
+
+${ragContext}
+
+INSTRUCTIONS :
+1. Si des DONNÉES RÉELLES sont présentes ci-dessus, résume-les et présente-les de manière claire et amicale à l'utilisateur.
+2. Si AUCUNE donnée pertinente n'a été trouvée dans la base de données (matchFound=false), utilise tes connaissances générales pour répondre poliment, donner des conseils ou recommander des ressources.
+3. Ne mentionne jamais "D'après la base de données" ou "Le contexte dit". Parle naturellement comme un bibliothécaire qui CONNAÎT ces informations.
+4. Si l'utilisateur demande à réserver, explique qu'il peut le faire directement via le bouton "Réserver" sur la page du livre.
+5. Sois concis et professionnel.
+
+Question de l'étudiant : "${userQuestion}"`;
 
     try {
-        return await run(systemPrompt);
+        // FILTER HISTORY TO ENSURE IT ALTERNATES CORRECTLY (Gemini requirement: starts with user)
+        let processedHistory = (conversationHistory || []).map(m => ({
+            role: m.isBot ? "model" : "user",
+            parts: [{ text: m.text }],
+        }));
+
+        // Remove the first message if it's from model (Gemini history should start with user)
+        if (processedHistory.length > 0 && processedHistory[0].role === "model") {
+            processedHistory = processedHistory.slice(1);
+        }
+
+        const chatSession = model.startChat({
+            generationConfig,
+            history: processedHistory.slice(-10),
+        });
+
+        const result = await chatSession.sendMessage(systemPrompt);
+        return result.response.text();
     } catch (error) {
         console.error('Erreur dans runLibraryBot:', error);
-        // Réponse de fallback avec l'heure
-        const fallbackGreeting = shouldGreet ? `${greeting} ! ` : '';
-        return `${fallbackGreeting}Je rencontre une difficulté technique ${timeContext}. La bibliothécaire vous répondra directement pour vous aider au mieux.`;
+        return "Je rencontre une petite difficulté technique. N'hésitez pas à contacter directement la bibliothécaire.";
     }
 }
 

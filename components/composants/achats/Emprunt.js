@@ -4,8 +4,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../../../config';
 import { UserContext } from '../../context/UserContext';
+import { useTranslation } from '../../hooks/useTranslation';
 
 export default function Emprunt({ navigation }) {
+    const { t, currentLanguage } = useTranslation();
     const { currentUserNewNav } = useContext(UserContext);
     const [emprunts, setEmprunts] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -44,7 +46,7 @@ export default function Emprunt({ navigation }) {
                                     collection: tabEtat[4],
                                     dateEmprunt: tabEtat[5], // Timestamp de la réservation/emprunt
                                     bookId: tabEtat[6] || null,
-                                    statut: 'Emprunté',
+                                    statut: t('borrowed_status'),
                                     // Calculer la date de retour (par exemple, 2 semaines après l'emprunt)
                                     dateRetour: tabEtat[5] ? new Date(tabEtat[5].seconds * 1000 + 14 * 24 * 60 * 60 * 1000) : new Date()
                                 };
@@ -83,31 +85,33 @@ export default function Emprunt({ navigation }) {
     const renderEmptyList = () => (
         <View style={styles.emptyContainer}>
             <Ionicons name="book-outline" size={60} color="#CCCCCC" />
-            <Text style={styles.emptyText}>Aucun livre emprunté</Text>
-            <Text style={styles.emptySubText}>Vos livres empruntés apparaîtront ici</Text>
+            <Text style={styles.emptyText}>{t('no_borrowed_books')}</Text>
+            <Text style={styles.emptySubText}>{t('borrowed_books_placeholder')}</Text>
             <TouchableOpacity
                 style={styles.browseButton}
                 onPress={navigateToBibliotheque}
             >
-                <Text style={styles.browseButtonText}>Parcourir la bibliothèque</Text>
+                <Text style={styles.browseButtonText}>{t('browse_library')}</Text>
             </TouchableOpacity>
         </View>
     );
 
     // Fonction cohérente pour formater les dates Firestore
+    // Fonction cohérente pour formater les dates Firestore
     const formatFirestoreDate = (date) => {
         if (!date) return 'N/A';
+        const locale = currentLanguage === 'Français' ? 'fr-FR' : 'en-US';
 
         // Si c'est un timestamp Firestore
         if (date.seconds) {
-            return new Date(date.seconds * 1000).toLocaleDateString('fr-FR');
+            return new Date(date.seconds * 1000).toLocaleDateString(locale);
         }
         // Si c'est déjà un objet Date
         if (date instanceof Date) {
-            return date.toLocaleDateString('fr-FR');
+            return date.toLocaleDateString(locale);
         }
         // Si c'est une chaîne ISO
-        return new Date(date).toLocaleDateString('fr-FR');
+        return new Date(date).toLocaleDateString(locale);
     };
 
     // Fonction pour vérifier si un emprunt est en retard
@@ -157,7 +161,7 @@ export default function Emprunt({ navigation }) {
                         <View style={styles.bookMeta}>
                             <Ionicons name="calendar-outline" size={14} color="#8E8E93" />
                             <Text style={styles.bookMetaText}>
-                                Emprunté le: {formatFirestoreDate(item.dateEmprunt)}
+                                {t('borrowed_on')} {formatFirestoreDate(item.dateEmprunt)}
                             </Text>
                         </View>
 
@@ -173,21 +177,21 @@ export default function Emprunt({ navigation }) {
                                     isOverdue ? styles.overdueText : {}
                                 ]}
                             >
-                                À rendre le: {formatFirestoreDate(item.dateRetour)}
+                                {t('return_by')} {formatFirestoreDate(item.dateRetour)}
                             </Text>
                         </View>
 
                         <View style={styles.bookMeta}>
                             <Ionicons name="location-outline" size={14} color="#8E8E93" />
                             <Text style={styles.bookMetaText}>
-                                Emplacement: {item.emplacement}/3
+                                {t('location_title')}: {item.emplacement}/3
                             </Text>
                         </View>
                     </View>
 
                     {isOverdue && (
                         <View style={styles.overdueTag}>
-                            <Text style={styles.overdueTagText}>En retard</Text>
+                            <Text style={styles.overdueTagText}>{t('overdue_status')}</Text>
                         </View>
                     )}
 
@@ -202,9 +206,9 @@ export default function Emprunt({ navigation }) {
     // Fonction pour déterminer la couleur du statut
     const getStatusColor = (status) => {
         switch (status) {
-            case 'Emprunté':
+            case t('borrowed_status'):
                 return '#FF8A50'; // Orange
-            case 'En retard':
+            case t('overdue_status'):
                 return '#FF3B30'; // Rouge
             default:
                 return '#757575'; // Gris par défaut
@@ -217,7 +221,7 @@ export default function Emprunt({ navigation }) {
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
                     <Ionicons name="arrow-back" size={24} color="#FF8A50" />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Mes emprunts</Text>
+                <Text style={styles.headerTitle}>{t('my_borrows_title')}</Text>
                 <View style={{ width: 24 }} />
             </View>
 

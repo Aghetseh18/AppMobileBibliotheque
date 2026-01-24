@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Alert } from 'react-native';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { useTranslation } from '../hooks/useTranslation';
 
 export default function SecuritySettings({ navigation }) {
+    const { t } = useTranslation();
     const [twoFactorAuth, setTwoFactorAuth] = useState(false);
     const [loginNotifications, setLoginNotifications] = useState(true);
     const [dataCollection, setDataCollection] = useState(true);
@@ -10,9 +12,9 @@ export default function SecuritySettings({ navigation }) {
     const handleTwoFactorToggle = (value) => {
         if (value) {
             Alert.alert(
-                'Authentification à deux facteurs',
-                'Cette fonctionnalité sera bientôt disponible.',
-                [{ text: 'OK' }]
+                t('two_factor'),
+                t('feature_coming_soon'),
+                [{ text: t('ok') }]
             );
         } else {
             setTwoFactorAuth(value);
@@ -25,15 +27,15 @@ export default function SecuritySettings({ navigation }) {
 
     const handleDeleteAccount = () => {
         Alert.alert(
-            'Supprimer le compte',
-            'Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est irréversible.',
+            t('delete_account'),
+            t('delete_account_confirm'),
             [
-                { text: 'Annuler', style: 'cancel' },
+                { text: t('cancel'), style: 'cancel' },
                 {
-                    text: 'Supprimer',
+                    text: t('delete'),
                     style: 'destructive',
                     onPress: () => {
-                        Alert.alert('Information', 'Pour supprimer votre compte, veuillez contacter l\'administration.');
+                        Alert.alert(t('val_information'), t('delete_account_contact_admin'));
                     }
                 }
             ]
@@ -74,28 +76,28 @@ export default function SecuritySettings({ navigation }) {
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
                     <Ionicons name="arrow-back" size={24} color="#FF8A50" />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Confidentialité et sécurité</Text>
+                <Text style={styles.headerTitle}>{t('security_title')}</Text>
                 <View style={{ width: 24 }} />
             </View>
 
             <ScrollView style={styles.content}>
                 {/* Section Sécurité du compte */}
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Sécurité du compte</Text>
+                    <Text style={styles.sectionTitle}>{t('account_security')}</Text>
 
                     {renderSettingItem({
                         icon: <MaterialIcons name="lock-outline" size={20} color="#5E60CE" />,
                         iconColor: "#5E60CE",
-                        title: "Modifier le mot de passe",
-                        subtitle: "Changez votre mot de passe régulièrement",
+                        title: t('change_password_title'),
+                        subtitle: t('change_pwd_subtitle'),
                         action: handleChangePassword
                     })}
 
                     {renderSettingItem({
                         icon: <MaterialIcons name="security" size={20} color="#4CAF50" />,
                         iconColor: "#4CAF50",
-                        title: "Authentification à deux facteurs",
-                        subtitle: "Ajoutez une couche de sécurité supplémentaire",
+                        title: t('two_factor'),
+                        subtitle: t('two_factor_subtitle'),
                         toggle: true,
                         value: twoFactorAuth,
                         action: handleTwoFactorToggle
@@ -104,13 +106,13 @@ export default function SecuritySettings({ navigation }) {
 
                 {/* Section Notifications */}
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Notifications de sécurité</Text>
+                    <Text style={styles.sectionTitle}>{t('security_notifications')}</Text>
 
                     {renderSettingItem({
                         icon: <Ionicons name="notifications-outline" size={20} color="#FF9800" />,
                         iconColor: "#FF9800",
-                        title: "Alertes de connexion",
-                        subtitle: "Être notifié des nouvelles connexions",
+                        title: t('login_alerts'),
+                        subtitle: t('login_alerts_subtitle'),
                         toggle: true,
                         value: loginNotifications,
                         action: setLoginNotifications
@@ -119,13 +121,13 @@ export default function SecuritySettings({ navigation }) {
 
                 {/* Section Confidentialité */}
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Confidentialité des données</Text>
+                    <Text style={styles.sectionTitle}>{t('data_privacy')}</Text>
 
                     {renderSettingItem({
                         icon: <MaterialIcons name="analytics" size={20} color="#2196F3" />,
                         iconColor: "#2196F3",
-                        title: "Collecte de données",
-                        subtitle: "Autoriser la collecte de données d'usage anonymes",
+                        title: t('data_collection'),
+                        subtitle: t('data_collection_subtitle'),
                         toggle: true,
                         value: dataCollection,
                         action: setDataCollection
@@ -134,21 +136,21 @@ export default function SecuritySettings({ navigation }) {
                     {renderSettingItem({
                         icon: <MaterialIcons name="download" size={20} color="#9C27B0" />,
                         iconColor: "#9C27B0",
-                        title: "Télécharger mes données",
-                        subtitle: "Obtenez une copie de vos données personnelles",
-                        action: () => Alert.alert('Information', 'Cette fonctionnalité sera bientôt disponible.')
+                        title: t('download_data'),
+                        subtitle: t('download_data_subtitle'),
+                        action: () => Alert.alert(t('val_information'), t('feature_coming_soon'))
                     })}
                 </View>
 
                 {/* Section Danger */}
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Zone de danger</Text>
+                    <Text style={styles.sectionTitle}>{t('danger_zone')}</Text>
 
                     {renderSettingItem({
                         icon: <MaterialIcons name="delete-forever" size={20} color="#FF3B30" />,
                         iconColor: "#FF3B30",
-                        title: "Supprimer mon compte",
-                        subtitle: "Suppression définitive de votre compte",
+                        title: t('delete_account'),
+                        subtitle: t('delete_account_subtitle'),
                         action: handleDeleteAccount,
                         dangerous: true
                     })}
@@ -156,12 +158,12 @@ export default function SecuritySettings({ navigation }) {
 
                 {/* Informations légales */}
                 <View style={styles.legalSection}>
-                    <Text style={styles.legalTitle}>Informations légales</Text>
+                    <Text style={styles.legalTitle}>{t('legal_info')}</Text>
                     <TouchableOpacity style={styles.legalItem}>
-                        <Text style={styles.legalText}>Politique de confidentialité</Text>
+                        <Text style={styles.legalText}>{t('privacy_policy')}</Text>
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.legalItem}>
-                        <Text style={styles.legalText}>Conditions d'utilisation</Text>
+                        <Text style={styles.legalText}>{t('terms_of_use')}</Text>
                     </TouchableOpacity>
                 </View>
             </ScrollView>

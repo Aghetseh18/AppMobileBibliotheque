@@ -2,6 +2,7 @@ import { Dimensions, Image, ScrollView, Text, TouchableOpacity, View, Alert, Mod
 import Swiper from 'react-native-swiper';
 import React, { useContext, useEffect, useState } from 'react';
 import { UserContextNavApp } from '../navigation/NavApp';
+import { useTranslation } from '../hooks/useTranslation';
 import { doc, updateDoc, arrayUnion, Timestamp, getDoc, collection, query, getDocs } from "firebase/firestore";
 import { useFirebase } from '../context/FirebaseContext';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,6 +19,7 @@ const normalizeString = (str) => {
 };
 
 const MemoireDetails = ({ route, navigation }) => {
+    const { t } = useTranslation();
     const {
         name,
         cathegorie,
@@ -139,17 +141,17 @@ const MemoireDetails = ({ route, navigation }) => {
 
     const handleAddComment = async () => {
         if (!currentUserdata?.email) {
-            Alert.alert('Erreur', 'Vous devez être connecté pour laisser un avis');
+            Alert.alert(t('error'), t('error_login_review'));
             return;
         }
 
         if (!valuesNote || valuesNote === '0') {
-            Alert.alert('Erreur', 'Veuillez donner une note');
+            Alert.alert(t('error'), t('error_missing_rating'));
             return;
         }
 
         if (!values.trim()) {
-            Alert.alert('Erreur', 'Veuillez écrire un commentaire');
+            Alert.alert(t('error'), t('error_missing_comment'));
             return;
         }
 
@@ -176,10 +178,12 @@ const MemoireDetails = ({ route, navigation }) => {
             setValuesNote("0");
             setModalComm(false);
 
-            Alert.alert("Succès", "Avis ajouté !");
+            setModalComm(false);
+
+            Alert.alert(t('success'), t('success_review_added'));
         } catch (error) {
             console.error("Erreur ajout commentaire:", error);
-            Alert.alert("Erreur", "Impossible d'ajouter le commentaire");
+            Alert.alert(t('error'), t('error_review_add'));
         }
     };
 
@@ -187,10 +191,10 @@ const MemoireDetails = ({ route, navigation }) => {
         if (pdfUrl) {
             Linking.openURL(pdfUrl).catch(err => {
                 console.error("Erreur ouverture PDF:", err);
-                Alert.alert("Erreur", "Impossible d'ouvrir le document");
+                Alert.alert(t('error'), t('error_pdf_open'));
             });
         } else {
-            Alert.alert("Info", "Aucun document PDF associé");
+            Alert.alert("Info", t('info_no_pdf'));
         }
     };
 
@@ -226,7 +230,7 @@ const MemoireDetails = ({ route, navigation }) => {
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
                     <Ionicons name="arrow-back" size={24} color="#000" />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle} numberOfLines={1}>{TITRE || "Détails Mémoire"}</Text>
+                <Text style={styles.headerTitle} numberOfLines={1}>{TITRE || t('thesis_details_title')}</Text>
                 <View style={{ width: 40 }} />
             </View>
 
@@ -251,59 +255,59 @@ const MemoireDetails = ({ route, navigation }) => {
                         <Text style={styles.bookTitle}>{TITRE}</Text>
                         <View style={styles.exemplairesContainer}>
                             <Text style={[styles.exemplairesText, styles.disponible]}>
-                                {pdfUrl ? 'Disponible en ligne' : 'Consultation sur place'}
+                                {pdfUrl ? t('available_online') : t('consultation_on_site')}
                             </Text>
                         </View>
                     </View>
 
                     <View style={styles.infoContainer}>
-                        <Text style={styles.infoLabel}>Sujet:</Text>
-                        <Text style={styles.infoValue}>{theme || cathegorie || 'Non défini'}</Text>
+                        <Text style={styles.infoLabel}>{t('subject_label')}</Text>
+                        <Text style={styles.infoValue}>{theme || cathegorie || t('uncategorized')}</Text>
                     </View>
 
                     {pdfUrl && (
                         <TouchableOpacity style={styles.empruntButton} onPress={handleDownload}>
-                            <Text style={styles.empruntButtonText}>Lire le document</Text>
+                            <Text style={styles.empruntButtonText}>{t('read_document')}</Text>
                         </TouchableOpacity>
                     )}
                 </View>
 
                 <View style={styles.descriptionContainer}>
                     <View style={styles.descriptionHeader}>
-                        <Text style={styles.descriptionTitle}>Abstract</Text>
+                        <Text style={styles.descriptionTitle}>{t('abstract_title')}</Text>
                         {desc && desc.length > 150 && (
                             <TouchableOpacity onPress={() => setModalDescription(true)} style={styles.seeMoreButton}>
-                                <Text style={styles.seeMoreText}>Voir plus</Text>
+                                <Text style={styles.seeMoreText}>{t('see_more')}</Text>
                             </TouchableOpacity>
                         )}
                     </View>
                     <Text style={styles.descriptionText}>
-                        {desc ? (desc.length > 150 ? `${desc.slice(0, 150)}...` : desc) : "Aucun abstract disponible."}
+                        {desc ? (desc.length > 150 ? `${desc.slice(0, 150)}...` : desc) : t('unavailable')}
                     </Text>
                 </View>
 
                 <View style={styles.locationContainer}>
-                    <Text style={styles.locationTitle}>Informations Académiques</Text>
+                    <Text style={styles.locationTitle}>{t('academic_info')}</Text>
                     <View style={styles.locationDetails}>
                         <View style={styles.locationItem}>
-                            <Text style={styles.locationLabel}>Année</Text>
+                            <Text style={styles.locationLabel}>{t('year_label')}</Text>
                             <Text style={styles.locationValue}>{annee || 'N/A'}</Text>
                         </View>
                         <View style={styles.locationDivider} />
                         <View style={styles.locationItem}>
-                            <Text style={styles.locationLabel}>Matricule</Text>
+                            <Text style={styles.locationLabel}>{t('matricule_label')}</Text>
                             <Text style={styles.locationValue}>{matricule || 'N/A'}</Text>
                         </View>
                     </View>
                     {superviseur && (
                         <View style={{ marginTop: 15, paddingTop: 15, borderTopWidth: 1, borderTopColor: '#f0f0f0' }}>
-                            <Text style={styles.locationLabel}>Superviseur</Text>
+                            <Text style={styles.locationLabel}>{t('supervisor_label')}</Text>
                             <Text style={[styles.locationValue, { fontSize: 16 }]}>{superviseur}</Text>
                         </View>
                     )}
                     {keywords && (
                         <View style={{ marginTop: 15 }}>
-                            <Text style={styles.locationLabel}>Mots-clés</Text>
+                            <Text style={styles.locationLabel}>{t('keywords_label')}</Text>
                             <View style={styles.keywordsList}>
                                 {Array.isArray(keywords) ? keywords.map((kw, i) => (
                                     <View key={i} style={styles.keywordBadge}>
@@ -317,9 +321,9 @@ const MemoireDetails = ({ route, navigation }) => {
 
                 <View style={styles.reviewsContainer}>
                     <View style={styles.reviewsHeader}>
-                        <Text style={styles.reviewsTitle}>Notes et avis</Text>
+                        <Text style={styles.reviewsTitle}>{t('reviews_title')}</Text>
                         <TouchableOpacity style={styles.addReviewButton} onPress={() => setModalComm(true)}>
-                            <Text style={styles.addReviewButtonText}>Donner mon avis</Text>
+                            <Text style={styles.addReviewButtonText}>{t('give_review')}</Text>
                         </TouchableOpacity>
                     </View>
 
@@ -333,7 +337,7 @@ const MemoireDetails = ({ route, navigation }) => {
                                     </Text>
                                 ))}
                             </View>
-                            <Text style={styles.totalReviews}>{comment.length} avis</Text>
+                            <Text style={styles.totalReviews}>{comment.length} {t('reviews_count')}</Text>
                         </View>
 
                         <View style={styles.ratingBarsContainer}>
@@ -354,7 +358,7 @@ const MemoireDetails = ({ route, navigation }) => {
                     </View>
 
                     <View style={styles.recentReviews}>
-                        <Text style={styles.recentReviewsTitle}>Commentaires récents</Text>
+                        <Text style={styles.recentReviewsTitle}>{t('recent_reviews')}</Text>
                         {comment.length > 0 ? (
                             <>
                                 {comment.slice(0, 3).map((review, index) => (
@@ -381,7 +385,7 @@ const MemoireDetails = ({ route, navigation }) => {
                                         </Text>
                                         {(review?.texte || '').length > 100 && (
                                             <TouchableOpacity onPress={() => toggleCommentExpansion(index)} style={styles.seeMoreButton}>
-                                                <Text style={styles.seeMoreText}>{expandedComments[index] ? 'Voir moins' : 'Voir plus'}</Text>
+                                                <Text style={styles.seeMoreText}>{expandedComments[index] ? t('see_less') : t('see_more')}</Text>
                                             </TouchableOpacity>
                                         )}
                                     </View>
@@ -411,13 +415,13 @@ const MemoireDetails = ({ route, navigation }) => {
                                 {comment.length > 3 && (
                                     <TouchableOpacity style={styles.seeAllReviewsButton} onPress={() => setShowAllComments(!showAllComments)}>
                                         <Text style={styles.seeAllReviewsText}>
-                                            {showAllComments ? "Voir moins d'avis" : `Voir ${comment.length - 3} avis supplémentaires`}
+                                            {showAllComments ? t('see_less_reviews') : t('see_more_reviews', { count: comment.length - 3 })}
                                         </Text>
                                     </TouchableOpacity>
                                 )}
                             </>
                         ) : (
-                            <Text style={styles.noReviews}>Aucun avis pour le moment</Text>
+                            <Text style={styles.noReviews}>{t('no_reviews_yet')}</Text>
                         )}
                     </View>
                 </View>
@@ -425,7 +429,7 @@ const MemoireDetails = ({ route, navigation }) => {
                 {/* Similar Memoires */}
                 <View style={styles.similarBooksContainer}>
                     <View style={styles.similarBooksHeader}>
-                        <Text style={styles.similarBooksTitle}>Mémoires similaires</Text>
+                        <Text style={styles.similarBooksTitle}>{t('similar_theses')}</Text>
                     </View>
                     {loadingSimilar ? (
                         <ActivityIndicator size="large" color="#007BFF" style={styles.loader} />
@@ -475,9 +479,9 @@ const MemoireDetails = ({ route, navigation }) => {
             <Modal animationType="slide" transparent={true} visible={modalComm} onRequestClose={() => setModalComm(false)}>
                 <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.modalOverlay}>
                     <View style={styles.modalContent}>
-                        <Text style={styles.modalTitle}>Donner mon avis</Text>
+                        <Text style={styles.modalTitle}>{t('rate_modal_title')}</Text>
                         <View style={styles.ratingInput}>
-                            <Text style={styles.ratingLabel}>Note :</Text>
+                            <Text style={styles.ratingLabel}>{t('rating_label')}</Text>
                             <View style={styles.starRatingContainer}>
                                 {[1, 2, 3, 4, 5].map(n => (
                                     <TouchableOpacity key={n} onPress={() => setValuesNote(n.toString())}>
@@ -488,7 +492,7 @@ const MemoireDetails = ({ route, navigation }) => {
                         </View>
                         <TextInput
                             style={styles.commentInput}
-                            placeholder="Écrivez votre avis ici..."
+                            placeholder={t('write_review_placeholder')}
                             multiline
                             numberOfLines={4}
                             value={values}
@@ -496,10 +500,10 @@ const MemoireDetails = ({ route, navigation }) => {
                         />
                         <View style={styles.modalButtons}>
                             <TouchableOpacity style={[styles.modalButton, styles.cancelButton]} onPress={() => setModalComm(false)}>
-                                <Text style={styles.cancelButtonText}>Annuler</Text>
+                                <Text style={styles.cancelButtonText}>{t('cancel_btn')}</Text>
                             </TouchableOpacity>
                             <TouchableOpacity style={[styles.modalButton, styles.submitButton]} onPress={handleAddComment}>
-                                <Text style={styles.submitButtonText}>Publier</Text>
+                                <Text style={styles.submitButtonText}>{t('submit_btn')}</Text>
                             </TouchableOpacity>
                         </View>
                     </View>
@@ -510,12 +514,12 @@ const MemoireDetails = ({ route, navigation }) => {
             <Modal animationType="slide" transparent={true} visible={modalDescription} onRequestClose={() => setModalDescription(false)}>
                 <View style={styles.modalContainer}>
                     <View style={styles.modalContent}>
-                        <Text style={styles.modalTitle}>Abstract complet</Text>
+                        <Text style={styles.modalTitle}>{t('full_abstract')}</Text>
                         <ScrollView style={styles.modalScrollView}>
                             <Text style={styles.modalDescriptionText}>{desc}</Text>
                         </ScrollView>
                         <TouchableOpacity style={styles.modalCloseButton} onPress={() => setModalDescription(false)}>
-                            <Text style={styles.modalCloseButtonText}>Fermer</Text>
+                            <Text style={styles.modalCloseButtonText}>{t('close_btn')}</Text>
                         </TouchableOpacity>
                     </View>
                 </View>

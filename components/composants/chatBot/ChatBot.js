@@ -14,156 +14,156 @@ import {
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
-import run from '../../../gemini'; // Import de votre fonction Gemini
-import { collection, query, limit, getDocs } from 'firebase/firestore';
-import { db } from '../../../config';
+import run, { runLibraryBot } from '../../../gemini'; // Import de votre fonction Gemini
+import { AssistantApi } from '../../utils/AssistantApi';
+import { useConfig } from '../../context/ConfigContext';
+
+const assistant = new AssistantApi();
 
 const ChatBot = ({ navigation, currentUser }) => {
+    const { orgSettings } = useConfig();
     const [messages, setMessages] = useState([]);
     const [inputText, setInputText] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [isTyping, setIsTyping] = useState(false);
+    const [quickSuggestions, setQuickSuggestions] = useState([]);
+
+    const isInitialized = useRef(false);
     const scrollViewRef = useRef(null);
 
-    // Message d'accueil initial
+    // Initialisation - Une seule fois
     useEffect(() => {
-        const welcomeMessage = {
-            id: Date.now(),
-            text: "Bonjour ! Je suis votre assistant virtuel de la bibliothèque. Comment puis-je vous aider aujourd'hui ?",
-            isBot: true,
-            timestamp: new Date(),
-            type: 'bot'
-        };
-        setMessages([welcomeMessage]);
-    }, []);
+        const initBot = async () => {
+            // Si déjà initialisé ou si on a déjà des messages (persistance), on ne fait rien
+            if (isInitialized.current || messages.length > 0) return;
 
-    // Auto-scroll vers le bas
-    useEffect(() => {
-        scrollToBottom();
-    }, [messages]);
+            const orgName = orgSettings?.Name || "la bibliothèque";
 
-    const scrollToBottom = () => {
-        setTimeout(() => {
-            scrollViewRef.current?.scrollToEnd({ animated: true });
-        }, 100);
-    };
-
-    // Prompts système pour contextualiser le bot
-    const getSystemPrompt = (userMessage) => {
-        return `Tu es un assistant virtuel pour une bibliothèque universitaire. 
-    Contexte : Tu aides des étudiants avec leurs questions sur :
-    - La recherche de livres et ressources
-    - Les procédures d'emprunt et de réservation
-    - Les horaires et services de la bibliothèque
-    - L'aide aux recherches académiques
-    - Les ressources numériques disponibles
-    
-    Instructions :
-    - Réponds de manière professionnelle mais amicale
-    - Sois concis et précis
-    - Si tu ne connais pas une information spécifique à cette bibliothèque, indique que l'étudiant peut contacter la bibliothécaire
-    - Propose des solutions pratiques
-    - Utilise un ton professionnel mais accessible
-    
-    Question de l'étudiant : ${userMessage}`;
-    };
-
-    // Gestion de l'envoi de message
-    const handleSendMessage = async () => {
-        if (!inputText.trim()) return;
-
-        const userMessage = {
-            id: Date.now(),
-            text: inputText.trim(),
-            isBot: false,
-            timestamp: new Date(),
-            type: 'user'
-        };
-
-        setMessages(prev => [...prev, userMessage]);
-        setInputText('');
-        setIsLoading(true);
-        setIsTyping(true);
-
-        try {
-            const lowerInput = userMessage.text.toLowerCase();
-            let additionalContext = "";
-
-            // Simple intent detection for search
-            if (lowerInput.includes('cherche') || lowerInput.includes('recherche') || lowerInput.includes('livre') || lowerInput.includes('mémoire')) {
-                // Perform search
-                const books = await searchBooks(lowerInput);
-                const theses = await searchTheses(lowerInput);
-
-                if (books.length > 0) {
-                    additionalContext += `\nLivres trouvés dans la base de données :\n${books.map(b => `- ${b.name} (${b.cathegorie})`).join('\n')}`;
-                }
-                if (theses.length > 0) {
-                    additionalContext += `\nMémoires trouvés dans la base de données :\n${theses.map(t => `- ${t.name} (${t.département})`).join('\n')}`;
-                }
-
-                if (books.length === 0 && theses.length === 0) {
-                    additionalContext += "\nAucun document exact trouvé dans la base de données pour cette recherche.";
-                }
-            }
-
-            // Préparer le prompt avec contexte
-            const contextualPrompt = getSystemPrompt(userMessage.text + additionalContext);
-
-            // Appel à l'API Gemini
-            const botResponse = await run(contextualPrompt);
-
-            // Message de réponse du bot
-            const botMessage = {
-                id: Date.now() + 1,
-                text: botResponse,
+            // Welcome message
+            const welcomeMessage = {
+                id: Date.now(),
+                text: `Bonjour ! Je suis votre assistant virtuel de ${orgName}. Comment puis-je vous aider aujourd'hui ?`,
                 isBot: true,
                 timestamp: new Date(),
                 type: 'bot'
             };
 
-            setMessages(prev => [...prev, botMessage]);
+            setMessages([welcomeMessage]);
+            isInitialized.current = true;
+
+            // Load quick suggestions
+            try {
+                const suggestions = await assistant.getQuickSuggestions();
+                setQuickSuggestions(suggestions);
+            } catch (e) {
+                console.error("Failed to load suggestions", e);
+            }
+        };
+
+        if (orgSettings) {
+            initBot();
+        }
+    }, [orgSettings]);
+
+    // Auto-scroll vers le bas lors de nouveaux messages
+    useEffect(() => {
+        if (messages.length > 0) {
+            scrollToBottom();
+        }
+    }, [messages]);
+
+    const scrollToBottom = () => {
+        if (scrollViewRef.current) {
+            setTimeout(() => {
+                scrollViewRef.current.scrollToEnd({ animated: true });
+            }, 150);
+        }
+    };
+
+    // Gestion de l'envoi de message
+    const handleSendMessage = async () => {
+        const textToSend = inputText.trim();
+        if (!textToSend || isLoading) return;
+
+        // 1. Log et Réinitialisation immédiate du champ
+        console.log('[ChatBot] Handling send:', textToSend);
+        setInputText('');
+
+        // 2. Création du message utilisateur
+        const userMsg = {
+            id: `user-${Date.now()}-${Math.random()}`,
+            text: textToSend,
+            isBot: false,
+            timestamp: new Date(),
+            type: 'user'
+        };
+
+        // 3. Mise à jour de l'UI (Priorité haute)
+        setMessages(prev => [...prev, userMsg]);
+        setIsLoading(true);
+        setIsTyping(true);
+
+        try {
+            // 4. Récupération du contexte RAG (Firestore)
+            const context = await assistant.queryKnowledgeBase(textToSend, orgSettings);
+
+            // 5. Tentative de réponse structurée simple
+            const simpleResp = await assistant.getAssistantResponse(textToSend);
+            if (simpleResp && !context.matchFound) {
+                const assistantMsg = {
+                    id: `bot-${Date.now()}`,
+                    text: simpleResp,
+                    isBot: true,
+                    timestamp: new Date(),
+                    type: 'bot'
+                };
+                setMessages(prev => [...prev, assistantMsg]);
+                setIsLoading(false);
+                setIsTyping(false);
+                return;
+            }
+
+            // 6. Appel Gemini AI
+            const botResp = await runLibraryBot(textToSend, messages, context);
+
+            const botMsg = {
+                id: `bot-${Date.now()}`,
+                text: botResp,
+                isBot: true,
+                timestamp: new Date(),
+                type: 'bot'
+            };
+
+            setMessages(prev => [...prev, botMsg]);
 
         } catch (error) {
-            console.error('Erreur Gemini:', error);
-
-            // Message d'erreur de fallback
-            const errorMessage = {
-                id: Date.now() + 1,
-                text: "Désolé, je rencontre des difficultés techniques. Veuillez contacter directement la bibliothécaire ou réessayer dans quelques instants.",
+            console.error('[ChatBot] Error in flow:', error);
+            const errorMsg = {
+                id: `err-${Date.now()}`,
+                text: "Désolé, une erreur technique est survenue. Réessayez plus tard.",
                 isBot: true,
                 timestamp: new Date(),
                 type: 'error'
             };
-
-            setMessages(prev => [...prev, errorMessage]);
+            setMessages(prev => [...prev, errorMsg]);
         } finally {
             setIsLoading(false);
             setIsTyping(false);
         }
     };
 
-    // Search functions
-    const searchBooks = async (queryText) => {
-        // This is a simplified search. In a real app, use structured queries or Algolia.
-        // For now, we fetch a subset and filter locally or use simple constraints if possible.
-        // Since firestore filtering is limited without indexes, we'll do a basic check here or just tell the AI we don't have full search capability yet if too complex.
-        // Let's assume we can pass some context about "available categories" at least.
-        return [];
-        // TODO: Implement actual firebase query if needed, but for now passing context to AI is key.
-        // Actually, let's try to fetch some books if the query is specific.
-    };
-
-    const searchTheses = async (queryText) => {
-        return [];
-    };
-
-    // Formater l'heure
+    // Formater l'heure de manière sécurisée
     const formatTime = (timestamp) => {
-        return timestamp.toLocaleTimeString('fr-FR', {
-            hour: '2-digit',
-            minute: '2-digit'
-        });
+        try {
+            if (!timestamp) return "";
+            const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
+            return date.toLocaleTimeString('fr-FR', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        } catch (e) {
+            return "";
+        }
     };
 
     // Composant Message
@@ -230,7 +230,7 @@ const ChatBot = ({ navigation, currentUser }) => {
         <KeyboardAvoidingView
             style={styles.container}
             behavior="padding"
-            keyboardVerticalOffset={Platform.OS === 'ios' ? 16 : 0}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
         >
             {/* Header */}
             <View style={styles.header}>
@@ -260,7 +260,6 @@ const ChatBot = ({ navigation, currentUser }) => {
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.messagesContent}
                 keyboardShouldPersistTaps="handled"
-                automaticallyAdjustKeyboardInsets
             >
                 {messages.map((message) => (
                     <MessageBubble key={message.id} message={message} />
@@ -268,6 +267,42 @@ const ChatBot = ({ navigation, currentUser }) => {
 
                 {isTyping && <TypingIndicator />}
             </ScrollView>
+
+            {/* Quick Actions */}
+            <View style={styles.quickActionsContainer}>
+                <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.quickActionsContent}
+                >
+                    {quickSuggestions.length > 0 ? quickSuggestions.map((suggestion, index) => (
+                        <TouchableOpacity
+                            key={index}
+                            style={styles.quickActionButton}
+                            onPress={() => setInputText(suggestion.query)}
+                        >
+                            <Text style={styles.quickActionText}>{suggestion.text}</Text>
+                        </TouchableOpacity>
+                    )) : (
+                        [
+                            "Chercher un livre",
+                            "Chercher un mémoire",
+                            "Horaires d'ouverture",
+                            "Comment emprunter ?",
+                            "Livre informatique",
+                            "Mémoire IA"
+                        ].map((action, index) => (
+                            <TouchableOpacity
+                                key={index}
+                                style={styles.quickActionButton}
+                                onPress={() => setInputText(action)}
+                            >
+                                <Text style={styles.quickActionText}>{action}</Text>
+                            </TouchableOpacity>
+                        ))
+                    )}
+                </ScrollView>
+            </View>
 
             {/* Zone de saisie */}
             <BlurView intensity={30} tint="light" style={styles.inputContainer}>
@@ -281,6 +316,8 @@ const ChatBot = ({ navigation, currentUser }) => {
                         multiline
                         maxLength={500}
                         editable={!isLoading}
+                        onSubmitEditing={handleSendMessage}
+                        blurOnSubmit={false}
                     />
 
                     <TouchableOpacity
@@ -478,6 +515,33 @@ const styles = StyleSheet.create({
         color: '#9CA3AF',
         textAlign: 'center',
         marginTop: 8,
+    },
+    // Quick Actions Styles
+    quickActionsContainer: {
+        paddingVertical: 10,
+        backgroundColor: '#f8f9fa',
+    },
+    quickActionsContent: {
+        paddingHorizontal: 15,
+    },
+    quickActionButton: {
+        backgroundColor: '#fff',
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+        borderRadius: 20,
+        marginRight: 10,
+        borderWidth: 1,
+        borderColor: '#E5E7EB',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 2,
+        elevation: 1,
+    },
+    quickActionText: {
+        fontSize: 13,
+        color: '#4B5563',
+        fontWeight: '500',
     },
 });
 

@@ -1,22 +1,49 @@
-import { StyleSheet, Text, View, TouchableOpacity, FlatList, SafeAreaView } from 'react-native';
-import React, { useState } from 'react';
+import { StyleSheet, Text, View, TouchableOpacity, FlatList, SafeAreaView, Alert } from 'react-native';
+import React, { useState, useContext, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
+import { UserContext } from '../context/UserContext';
+import { db } from '../../config';
+import { doc, updateDoc } from 'firebase/firestore';
+import { useTranslation } from '../hooks/useTranslation';
 
 export default function LanguageSettings({ navigation }) {
-    const [selectedLanguage, setSelectedLanguage] = useState('Français');
+    const { datUser, setDatUser } = useContext(UserContext);
+    const { t } = useTranslation();
+    const [selectedLanguage, setSelectedLanguage] = useState(datUser?.language || 'Français');
 
     const languages = [
         { id: '1', name: 'Français', code: 'fr' },
         { id: '2', name: 'English', code: 'en' },
-        { id: '3', name: 'Español', code: 'es' },
-        { id: '4', name: 'العربية', code: 'ar' },
-        { id: '5', name: 'Deutsch', code: 'de' }
     ];
 
-    const handleLanguageSelect = (language) => {
+    useEffect(() => {
+        if (datUser?.language) {
+            setSelectedLanguage(datUser.language);
+        }
+    }, [datUser]);
+
+    const handleLanguageSelect = async (language) => {
+        const prevLanguage = selectedLanguage;
         setSelectedLanguage(language.name);
-        // Here you would typically update the app's language context or settings
-        // For example: updateLanguage(language.code);
+
+        if (datUser?.email) {
+            try {
+                const userRef = doc(db, 'BiblioUser', datUser.email);
+                await updateDoc(userRef, {
+                    language: language.name
+                });
+
+                // Update local context
+                if (setDatUser) {
+                    setDatUser({ ...datUser, language: language.name });
+                }
+
+            } catch (error) {
+                console.error("Error updating language:", error);
+                Alert.alert(t('error'), t('change_language_error'));
+                setSelectedLanguage(prevLanguage); // Revert on error
+            }
+        }
     };
 
     return (
@@ -28,11 +55,11 @@ export default function LanguageSettings({ navigation }) {
                 >
                     <Ionicons name="arrow-back" size={24} color="#FF8A50" />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Langue</Text>
+                <Text style={styles.headerTitle}>{t('language')}</Text>
                 <View style={{ width: 24 }} />
             </View>
 
-            <Text style={styles.subtitle}>Sélectionnez votre langue préférée</Text>
+            <Text style={styles.subtitle}>{t('select_language')}</Text>
 
             <FlatList
                 data={languages}

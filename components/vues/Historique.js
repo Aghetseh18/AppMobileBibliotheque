@@ -3,10 +3,11 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, Alert, Activ
 import { Ionicons } from '@expo/vector-icons';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../../config';
-
+import { useTranslation } from '../hooks/useTranslation';
 
 export default function Historique({ route, navigation }) {
     const { datUser } = route.params;
+    const { t } = useTranslation();
     const [historique, setHistorique] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -37,12 +38,12 @@ export default function Historique({ route, navigation }) {
 
     const clearHistory = async () => {
         Alert.alert(
-            'Confirmer la suppression',
-            'Êtes-vous sûr de vouloir supprimer tout votre historique de consultation ?',
+            t('confirm_delete_history_title'),
+            t('confirm_delete_history_msg'),
             [
-                { text: 'Annuler', style: 'cancel' },
+                { text: t('cancel'), style: 'cancel' },
                 {
-                    text: 'Supprimer',
+                    text: t('delete'),
                     style: 'destructive',
                     onPress: async () => {
                         if (!datUser || !datUser.email) return;
@@ -53,10 +54,10 @@ export default function Historique({ route, navigation }) {
                                 historique: []
                             });
                             setHistorique([]);
-                            Alert.alert('Succès', 'Votre historique a été supprimé');
+                            Alert.alert(t('success'), t('delete_history_success'));
                         } catch (error) {
                             console.error('Erreur lors de la suppression de l\'historique:', error);
-                            Alert.alert('Erreur', 'Impossible de supprimer l\'historique');
+                            Alert.alert(t('error'), t('delete_history_error'));
                         } finally {
                             setLoading(false);
                         }
@@ -70,13 +71,13 @@ export default function Historique({ route, navigation }) {
     const renderEmptyList = () => (
         <View style={styles.emptyContainer}>
             <Ionicons name="time-outline" size={60} color="#CCCCCC" />
-            <Text style={styles.emptyText}>Aucun livre consulté</Text>
-            <Text style={styles.emptySubText}>Les livres que vous consultez apparaîtront ici</Text>
+            <Text style={styles.emptyText}>{t('no_history')}</Text>
+            <Text style={styles.emptySubText}>{t('no_history_sub')}</Text>
             <TouchableOpacity
                 style={styles.browseButton}
                 onPress={navigateToBibliotheque}
             >
-                <Text style={styles.browseButtonText}>Parcourir la bibliothèque</Text>
+                <Text style={styles.browseButtonText}>{t('browse_library')}</Text>
             </TouchableOpacity>
         </View>
     );
@@ -89,7 +90,7 @@ export default function Historique({ route, navigation }) {
         if (!historique || historique.length === 0) {
             return (
                 <View style={styles.emptyHistoryContainer}>
-                    <Text style={styles.emptyHistoryText}>Aucun livre consulté</Text>
+                    <Text style={styles.emptyHistoryText}>{t('no_history')}</Text>
                 </View>
             );
         }
@@ -129,7 +130,7 @@ export default function Historique({ route, navigation }) {
                                     {book.cathegorieDoc} • {book.type}
                                 </Text>
                                 <Text style={styles.historyDate}>
-                                    Consulté le {book.dateVue.toDate().toLocaleDateString()}
+                                    {t('consulted_on')}{book.dateVue.toDate().toLocaleDateString()}
                                 </Text>
                             </View>
                         </TouchableOpacity>
@@ -144,7 +145,7 @@ export default function Historique({ route, navigation }) {
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
                     <Ionicons name="arrow-back" size={24} color="#FF8A50" />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Historique de consultation</Text>
+                <Text style={styles.headerTitle}>{t('history_title')}</Text>
                 {historique.length > 0 && (
                     <TouchableOpacity onPress={clearHistory} style={styles.clearButton}>
                         <Ionicons name="trash-outline" size={22} color="#FF3B30" />

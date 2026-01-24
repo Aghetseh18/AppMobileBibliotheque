@@ -7,6 +7,7 @@ import { db } from '../../../firebaseConfig';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { addNotification, NOTIFICATION_TYPES } from '../../utils/addNotification';
+import { useTranslation } from '../../hooks/useTranslation';
 
 const WIDTH = Dimensions.get('window').width;
 const HEIGHT = Dimensions.get('window').height;
@@ -63,6 +64,7 @@ const CathegorieBiblio = ({ cathegorie, donnee }) => {
 }
 
 const Panier = (props) => {
+    const { t } = useTranslation();
     const { currentUserNewNav: currentUserdata } = useContext(UserContext);
     const [dat, setDat] = useState({});
     const [panierLoader, setPanierLoader] = useState(true);
@@ -105,12 +107,12 @@ const Panier = (props) => {
             ) : (
                 <View>
                     {hasActiveReservations(dat) ? (
-                        <CathegorieBiblio donnee={dat} cathegorie='Mes Réservations' />
+                        <CathegorieBiblio donnee={dat} cathegorie={t('my_reservations_title')} />
                     ) : (
                         <View style={styles.emptyCart}>
                             <MaterialIcons name="shopping-basket" size={80} color="#00ff00" />
-                            <Text style={styles.emptyCartText}>Aucune réservation</Text>
-                            <Text style={styles.emptyCartSubtext}>Votre panier de réservation est vide</Text>
+                            <Text style={styles.emptyCartText}>{t('no_reservations')}</Text>
+                            <Text style={styles.emptyCartSubtext}>{t('empty_reservations_placeholder')}</Text>
                         </View>
                     )}
                 </View>
@@ -120,18 +122,20 @@ const Panier = (props) => {
 }
 
 const Cadre = ({ cathegorie, desc, exemplaire, image, name, matricule, cathegorie2, nomBD, dateHeure, etatIndex }) => {
+    const { t, currentLanguage } = useTranslation();
     const { currentUserNewNav: currentUserdata } = useContext(UserContext);
     const [showDialog, setShowDialog] = useState(false);
     const [imageError, setImageError] = useState(false);
 
     const formatDate = dateHeure ? new Date(dateHeure.seconds * 1000) : new Date();
-    const date = formatDate.toLocaleDateString('fr-FR', {
+    const locale = currentLanguage === 'Français' ? 'fr-FR' : 'en-US';
+    const date = formatDate.toLocaleDateString(locale, {
         weekday: 'long',
         year: 'numeric',
         month: 'long',
         day: 'numeric'
     });
-    const heure = formatDate.toLocaleTimeString('fr-FR', {
+    const heure = formatDate.toLocaleTimeString(locale, {
         hour: '2-digit',
         minute: '2-digit'
     });
@@ -214,15 +218,15 @@ const Cadre = ({ cathegorie, desc, exemplaire, image, name, matricule, cathegori
             await addNotification(
                 currentUserdata.email,
                 NOTIFICATION_TYPES.ANNULATION,
-                'Réservation annulée',
-                `Votre réservation pour "${nomLivre}" a été annulée avec succès.`
+                t('reservation_cancelled_title'),
+                t('reservation_cancelled_msg', { book: nomLivre })
             );
 
-            Alert.alert('Succès', 'Réservation annulée avec succès');
+            Alert.alert(t('success'), t('reservation_cancelled_success'));
 
         } catch (error) {
             console.error('Erreur lors de l\'annulation de la réservation:', error);
-            Alert.alert('Erreur', `Une erreur est survenue: ${error.message}`);
+            Alert.alert(t('error'), `${t('generic_error')} ${error.message}`);
         }
     };
 
@@ -247,19 +251,19 @@ const Cadre = ({ cathegorie, desc, exemplaire, image, name, matricule, cathegori
                         style={styles.deleteButton}
                         onPress={() => setShowDialog(true)}
                     >
-                        <Text style={styles.deleteButtonText}>Annuler la réservation</Text>
+                        <Text style={styles.deleteButtonText}>{t('cancel_reservation_btn')}</Text>
                     </TouchableOpacity>
                 </View>
             </View>
 
             <Dialog.Container visible={showDialog}>
-                <Dialog.Title>Confirmer l'annulation</Dialog.Title>
+                <Dialog.Title>{t('confirm_cancellation_title')}</Dialog.Title>
                 <Dialog.Description>
-                    Voulez-vous vraiment annuler cette réservation ?
+                    {t('confirm_cancellation_msg')}
                 </Dialog.Description>
-                <Dialog.Button label="Non" onPress={() => setShowDialog(false)} />
+                <Dialog.Button label={t('no')} onPress={() => setShowDialog(false)} />
                 <Dialog.Button
-                    label="Oui, annuler"
+                    label={t('yes_cancel')}
                     onPress={() => {
                         setShowDialog(false);
                         annulerReservation(etatIndex);

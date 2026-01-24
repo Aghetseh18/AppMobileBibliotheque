@@ -4,7 +4,8 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import NewNav from './components/navigation/NewNav';
 import { UserContextProvider } from './components/context/UserContext';
 import { FirebaseProvider } from './components/context/FirebaseContext';
-import { Ionicons, MaterialIcons } from '@expo/vector-icons'; // <-- import icons you use
+import { ConfigProvider } from './components/context/ConfigContext';
+import { Ionicons, MaterialIcons, FontAwesome } from '@expo/vector-icons'; // <-- import icons you use
 
 export default function App() {
   const [fontsLoaded, setFontsLoaded] = useState(false);
@@ -16,6 +17,7 @@ export default function App() {
           'Georgia': require('./assets/fonts/Georgia.ttf'),
           ...Ionicons.font,
           ...MaterialIcons.font,
+          ...FontAwesome.font,
         });
         setFontsLoaded(true);
       } catch (error) {
@@ -37,9 +39,11 @@ export default function App() {
 
   return (
     <FirebaseProvider>
-      <UserContextProvider>
-        <NewNav />
-      </UserContextProvider>
+      <ConfigProvider>
+        <UserContextProvider>
+          <NewNav />
+        </UserContextProvider>
+      </ConfigProvider>
     </FirebaseProvider>
   );
 }

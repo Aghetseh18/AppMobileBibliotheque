@@ -49,8 +49,8 @@ const NavApp = () => {
     >
       <Stack.Navigator screenOptions={screenOptions}>
         {!currentUserdata ? (
-          <Stack.Screen 
-            name="NavLogin" 
+          <Stack.Screen
+            name="NavLogin"
             component={NavLogin}
             options={{
               animationTypeForReplace: !currentUserdata ? 'pop' : 'push',

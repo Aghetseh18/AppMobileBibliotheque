@@ -6,15 +6,15 @@ import InitialScreen from '../login/InitialScreen';
 
 const Stack = createStackNavigator();
 
-const screenOptions = { 
+const screenOptions = {
   headerShown: false,
   cardStyle: { backgroundColor: 'white' }
 };
 
 const NavLogin = () => {
   return (
-    <Stack.Navigator 
-      screenOptions={screenOptions} 
+    <Stack.Navigator
+      screenOptions={screenOptions}
       initialRouteName='InitialScreen'
     >
       <Stack.Screen name='InitialScreen' component={InitialScreen} />
