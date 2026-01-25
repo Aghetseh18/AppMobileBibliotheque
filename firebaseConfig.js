@@ -29,6 +29,7 @@ try {
   });
 } catch (error) {
   // Si déjà initialisé (ex: hot reload), récupérer l'instance existante
+  console.error("DEBUG: initializeAuth failed with:", error); // <-- Trace exact error
   auth = getAuth(app);
 }
 
