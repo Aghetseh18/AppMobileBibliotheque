@@ -6,6 +6,8 @@ import { UserContextProvider } from './components/context/UserContext';
 import { FirebaseProvider } from './components/context/FirebaseContext';
 import { ConfigProvider } from './components/context/ConfigContext';
 import { Ionicons, MaterialIcons, FontAwesome, MaterialCommunityIcons, FontAwesome5, Feather } from '@expo/vector-icons'; // <-- import icons you use
+import ClientAlertModal from './components/alerts/ClientAlertModal';
+import MaintenanceGate from './components/alerts/MaintenanceGate';
 
 export default function App() {
   const [fontsLoaded, setFontsLoaded] = useState(false);
@@ -41,13 +43,16 @@ export default function App() {
   }
 
   return (
-    <FirebaseProvider>
-      <ConfigProvider>
+    <ConfigProvider>
+      <FirebaseProvider>
         <UserContextProvider>
-          <NewNav />
+          <MaintenanceGate>
+            <ClientAlertModal />
+            <NewNav />
+          </MaintenanceGate>
         </UserContextProvider>
-      </ConfigProvider>
-    </FirebaseProvider>
+      </FirebaseProvider>
+    </ConfigProvider>
   );
 }
 

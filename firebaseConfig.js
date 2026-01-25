@@ -5,6 +5,7 @@ import { getFirestore, enableIndexedDbPersistence } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from "@react-native-community/netinfo";
+import { Platform } from 'react-native';
 
 const firebaseConfig = {
   apiKey: "AIzaSyC-7xG1TTllRRyMldk4mS7k_8BcjMTAWi8",
@@ -22,12 +23,13 @@ const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 // Initialiser Auth
 let auth;
 try {
-  auth = getAuth(app);
-} catch (error) {
-  console.log("Erreur lors de l'initialisation de l'authentification Firebase:", error);
+  // Essayer d'initialiser avec la persistence (doit être fait avant getAuth s'il n'existe pas)
   auth = initializeAuth(app, {
     persistence: getReactNativePersistence(AsyncStorage)
   });
+} catch (error) {
+  // Si déjà initialisé (ex: hot reload), récupérer l'instance existante
+  auth = getAuth(app);
 }
 
 // Initialiser Firestore et Storage
@@ -44,17 +46,20 @@ async function initializePersistence() {
   try {
     console.log("Vérification de la connexion réseau...");
     const netState = await NetInfo.fetch();
-    
+
     if (netState.isConnected) {
       console.log("Activation de la persistence Firestore...");
-      try {
-        await enableIndexedDbPersistence(db);
-        console.log("Persistence Firestore activée avec succès");
-      } catch (err) {
-        if (err.code === 'failed-precondition') {
-          console.warn("Multiple tabs open, persistence can only be enabled in one tab at a time.");
-        } else if (err.code === 'unimplemented') {
-          console.warn("Current browser does not support all of IndexedDB features.");
+      // La persistence IndexedDB ne fonctionne que sur le web
+      if (Platform.OS === 'web') {
+        try {
+          await enableIndexedDbPersistence(db);
+          console.log("Persistence Firestore activée avec succès");
+        } catch (err) {
+          if (err.code === 'failed-precondition') {
+            console.warn("Multiple tabs open, persistence can only be enabled in one tab at a time.");
+          } else if (err.code === 'unimplemented') {
+            console.warn("Current browser does not support all of IndexedDB features.");
+          }
         }
       }
     }

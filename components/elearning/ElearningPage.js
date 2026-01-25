@@ -15,12 +15,12 @@ import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '../../firebaseConfig';
 import { UserContext } from '../context/UserContext';
 import { useTranslation } from '../hooks/useTranslation';
+import CustomHeader from './CustomHeader';
 
 const { WIDTH, HEIGHT } = Dimensions.get('window');
-
 const ELearningPage = ({ navigation }) => {
     const { t } = useTranslation();
-    const { currentUserNewNav } = useContext(UserContext);
+    const { currentUserNewNav, datUser } = useContext(UserContext);
     const [allLivres, setAllLivres] = useState([]);
     const [allMemoires, setAllMemoires] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -29,12 +29,30 @@ const ELearningPage = ({ navigation }) => {
     const itemsPerPage = 15;
 
     useEffect(() => {
+        navigation.setOptions({
+            headerShown: true,
+            header: () => (
+                <CustomHeader
+                    userName={
+                        // Prefer Firestore name, fall back to displayName, then email local-part
+                        datUser?.name
+                        || currentUserNewNav?.displayName
+                        || (currentUserNewNav?.email ? currentUserNewNav.email.split('@')[0] : 'Utilisateur')
+                    }
+                    userImage={datUser?.profilPicture || null}
+                    onProfilePress={() => {
+                        navigation.navigate('Settings');
+                    }}
+                />
+            ),
+        });
         if (!currentUserNewNav?.email) {
             setLoading(false);
             return;
         }
         loadAllData();
-    }, [currentUserNewNav?.email]);
+    }, [navigation, currentUserNewNav?.email, datUser]);
+
 
     useEffect(() => {
         setCurrentPage(1); // Reset pagination when switching tabs

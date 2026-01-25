@@ -1,0 +1,19 @@
+What I found (pages & components)
+
+Bibliothèque (main/library view): VueUn.js — main library/home screen (lists categories, popular books, recommendations).
+
+Library entry / launcher: ScreenVueUn.js — small wrapper used as the initial route in the shop stack.
+
+Shop / library navigator: NavShop.js — contains routes for ScreenVueUn, VueUn, Panier, Produit, etc.
+
+Book / reservation UI (where reservations are created): Produit.js — contains the reservation logic (ajouterRecent) and UI for a single book (reserving, comments, etc.).
+
+User reservations / emprunts page: Emprunt.js — shows current emprunts (and links to book details / library). It navigates to VueUn when user wants to browse.
+
+Reservations list / cart: Panier.js — shows active reservations, allows cancelling reservations.
+
+Other related files
+
+NavParams.js — exposes Emprunt and VueUn in the params stack.
+FichePaie.js — present in the same folder (payment/receipt UI).
+Produit.js and Panier.js implement reservation state updates in Firestore.

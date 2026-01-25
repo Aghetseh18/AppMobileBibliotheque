@@ -3,6 +3,7 @@ import React from 'react';
 import SignUpScreen from '../login/SignUpScreen';
 import LoginScreen from '../login/LoginScreen';
 import InitialScreen from '../login/InitialScreen';
+import EmailVerificationScreen from '../composants/EmailVerificationScreen';
 
 const Stack = createStackNavigator();
 
@@ -20,6 +21,7 @@ const NavLogin = () => {
       <Stack.Screen name='InitialScreen' component={InitialScreen} />
       <Stack.Screen name='LoginScreen' component={LoginScreen} />
       <Stack.Screen name='SignUpScreen' component={SignUpScreen} />
+      <Stack.Screen name='EmailVerificationScreen' component={EmailVerificationScreen} />
     </Stack.Navigator>
   );
 };

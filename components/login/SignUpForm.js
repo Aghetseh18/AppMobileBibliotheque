@@ -1,3 +1,4 @@
+import { Platform, ScrollView } from 'react-native'; // Added this line for expo web compatibility
 import { Picker } from '@react-native-picker/picker';
 import { Timestamp, doc, setDoc, getDoc, collection, getDocs } from "firebase/firestore";
 import { Ionicons } from '@expo/vector-icons';
@@ -11,6 +12,7 @@ import { auth, storage, db } from '../../config';
 import { UserContext } from '../context/UserContext';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
+
 
 const WIDTH = Dimensions.get('window').width;
 const HEIGHT = Dimensions.get('window').height;
@@ -27,7 +29,7 @@ const levels = [
 
 const SignUpForm = ({ navigation }) => {
     const { emailHigh, setEmailHigh } = useContext(UserContext);
-    const [selectedLevel, setSelectedLevel] = useState('');
+    const [selectedLevel, setSelectedLevel] = useState(''); // modified this for debugging purposes
     const [selectedDepartment, setSelectedDepartment] = useState('');
     const [image, setImage] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
@@ -182,31 +184,43 @@ const SignUpForm = ({ navigation }) => {
                 etat1: 'ras',
                 etat2: 'ras',
                 etat3: 'ras',
-                emailVerified: false,
                 profilePicture: profilePictureUrl
+                // Remove emailVerified from Firestore - use Firebase Auth's built-in tracking
             });
 
-            setEmailHigh(email);
+            // setEmailHigh(email);
 
-            // Envoyer un email de vérification en arrière-plan
-            sendEmailVerification(user).catch(error => {
-                console.error('Erreur lors de l\'envoi de l\'email de vérification:', error);
-            });
+            // Envoyer un email de vérification avec gestion d'erreur
+            try {
+                await sendEmailVerification(user);
+                // Save email to context for the verification screen
+                setEmailHigh(email);
+                // await signOut(auth);  
+                // Go to verification screen
+                navigation.navigate('EmailVerificationScreen', { email });
 
-            // Afficher le message de succès
-            Alert.alert(
-                'Bienvenue!',
-                'Votre compte a été créé avec succès. Un email de vérification vous a été envoyé.',
-                [
-                    {
-                        text: 'OK',
-                        onPress: () => {
-                            navigation.replace('MainContainer');
+            } catch (emailError) {
+                // If sending failed, still save the email so the verification screen can resend
+                console.error("Erreur lors de l'envoi de l'email de vérification:", emailError);
+                setEmailHigh(email);
+
+                Alert.alert(
+                    'Attention',
+                    'Votre compte a été créé, mais nous n\'avons pas pu envoyer l\'email de vérification. Veuillez réessayer sur la page suivante.',
+                    [
+                        {
+                            text: 'Continuer',
+                            onPress: () => {
+                                navigation.navigate('EmailVerificationScreen', { email: email });
+                            },
                         },
-                    },
-                ],
-                { cancelable: false }
-            );
+                    ]
+                );
+                return;
+            }
+
+            // Navigate to email verification screen only if email was sent successfully
+            // navigation.replace('EmailVerificationScreen', { email: email });
 
         } catch (error) {
             // Log l'erreur en développement uniquement
@@ -267,8 +281,17 @@ const SignUpForm = ({ navigation }) => {
         }
     };
 
+    // For web compatibility, wrap in ScrollView
+    // Use a normal ScrollView on web, and keep KeyboardAwareScrollView on mobile
+    const Wrapper = Platform.OS === 'web' ? ScrollView : KeyboardAwareScrollView;
+
     return (
-        <KeyboardAwareScrollView>
+
+        <Wrapper
+            contentContainerStyle={{ flexGrow: 1 }}
+            style={{ flex: 1 }}
+            keyboardShouldPersistTaps="handled"
+        >
             <View style={styles.container}>
                 <View style={styles.header}>
                     <Image
@@ -511,7 +534,7 @@ const SignUpForm = ({ navigation }) => {
                     </Formik>
                 </View>
             </View>
-        </KeyboardAwareScrollView>
+        </Wrapper>
     );
 };
 
