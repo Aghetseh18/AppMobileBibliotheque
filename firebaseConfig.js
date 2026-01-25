@@ -33,7 +33,6 @@ try {
   auth = getAuth(app);
 }
 
-
 // Initialiser Firestore et Storage
 const db = getFirestore(app);
 const storage = getStorage(app);
