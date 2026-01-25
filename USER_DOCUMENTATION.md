@@ -55,6 +55,15 @@ Tap on any book to see detailed information:
 - **Availability**: Check if the book is available for physical checkout or digital reading.
 - **Reviews**: Read feedback from other students.
 
+### 3.3 Book Reservation
+To reserve a book:
+1. **Search**: Find the book you wish to borrow in the catalogue.
+2. **Reserve**: Tap the **"Reserve"** button on the book details page.
+3. **Confirmation**: You will receive a confirmation if the reservation is successful.
+4. **Pickup**: Go to the library reception to pick up your book.
+   - *Note*: You can have a maximum of **3 active reservations** at a time.
+   - Check your current reservations in **Settings > My Borrowings**.
+
 ---
 
 ## 4. E-learning & OpenClassrooms

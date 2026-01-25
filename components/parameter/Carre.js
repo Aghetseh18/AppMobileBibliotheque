@@ -18,7 +18,7 @@ const Carre = () => {
       }
 
       let result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images, // Spécifier seulement les images
+        mediaTypes: ImagePicker.MediaType.Images, // Spécifier seulement les images
         allowsEditing: true,
         aspect: [4, 3],
         quality: 0.8, // Compromis entre qualité et taille
@@ -44,10 +44,10 @@ const Carre = () => {
     try {
       const blob = await new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
-        xhr.onload = function() {
+        xhr.onload = function () {
           resolve(xhr.response);
         };
-        xhr.onerror = function(e) {
+        xhr.onerror = function (e) {
           console.log('Erreur de requête:', e);
           reject(new TypeError('Échec de la requête réseau'));
         };
@@ -63,27 +63,27 @@ const Carre = () => {
       const uploadTask = ref.put(blob);
 
       uploadTask.on(
-          firebase.storage.TaskEvent.STATE_CHANGED,
-          (snapshot) => {
+        firebase.storage.TaskEvent.STATE_CHANGED,
+        (snapshot) => {
 
-            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-            console.log(`Progression: ${progress.toFixed(2)}%`);
-          },
-          (error) => {
+          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          console.log(`Progression: ${progress.toFixed(2)}%`);
+        },
+        (error) => {
+          setUploading(false);
+          console.error('Erreur d\'upload:', error);
+          alert('Erreur lors de l\'upload de l\'image');
+          blob.close();
+        },
+        () => {
+          uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
             setUploading(false);
-            console.error('Erreur d\'upload:', error);
-            alert('Erreur lors de l\'upload de l\'image');
-            blob.close();
-          },
-          () => {
-            uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
-              setUploading(false);
-              console.log("URL de téléchargement:", downloadURL);
+            console.log("URL de téléchargement:", downloadURL);
 
-              alert('Image téléchargée avec succès!');
-              blob.close();
-            });
-          }
+            alert('Image téléchargée avec succès!');
+            blob.close();
+          });
+        }
       );
     } catch (error) {
       setUploading(false);
@@ -93,28 +93,28 @@ const Carre = () => {
   };
 
   return (
-      <View style={{ alignItems: 'center', padding: 20 }}>
-        {image && (
-            <Image
-                source={{ uri: image }}
-                style={{ width: 200, height: 200, marginBottom: 20, borderRadius: 10 }}
-            />
+    <View style={{ alignItems: 'center', padding: 20 }}>
+      {image && (
+        <Image
+          source={{ uri: image }}
+          style={{ width: 200, height: 200, marginBottom: 20, borderRadius: 10 }}
+        />
+      )}
+
+      <View style={{ flexDirection: 'row', justifyContent: 'space-around', width: '100%' }}>
+        <Button title="Sélectionner une image" onPress={pickImage} />
+
+        {uploading ? (
+          <ActivityIndicator size="small" color="black" />
+        ) : (
+          <Button
+            title="Télécharger l'image"
+            onPress={uploadImage}
+            disabled={!image}
+          />
         )}
-
-        <View style={{ flexDirection: 'row', justifyContent: 'space-around', width: '100%' }}>
-          <Button title="Sélectionner une image" onPress={pickImage} />
-
-          {uploading ? (
-              <ActivityIndicator size="small" color="black" />
-          ) : (
-              <Button
-                  title="Télécharger l'image"
-                  onPress={uploadImage}
-                  disabled={!image}
-              />
-          )}
-        </View>
       </View>
+    </View>
   );
 };
 

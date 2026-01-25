@@ -11,6 +11,7 @@ import {
     Platform,
     Alert
 } from 'react-native';
+import Markdown from 'react-native-markdown-display';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
@@ -19,6 +20,80 @@ import { AssistantApi } from '../../utils/AssistantApi';
 import { useConfig } from '../../context/ConfigContext';
 
 const assistant = new AssistantApi();
+
+console.log('Markdown component import check:', Markdown ? 'Defined' : 'Undefined');
+
+const formatTime = (timestamp) => {
+    try {
+        if (!timestamp) return "";
+        const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
+        return date.toLocaleTimeString('fr-FR', {
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    } catch (e) {
+        return "";
+    }
+};
+
+const MessageBubble = ({ message }) => {
+    const isBot = message.isBot;
+    const isError = message.type === 'error';
+
+    return (
+        <View style={[
+            styles.messageBubble,
+            isBot ? styles.botMessage : styles.userMessage
+        ]}>
+            {isBot && (
+                <View style={styles.botAvatar}>
+                    <MaterialIcons
+                        name="support-agent"
+                        size={16}
+                        color="#fff"
+                    />
+                </View>
+            )}
+
+            <View style={[
+                styles.messageContent,
+                isBot ? styles.botMessageContent : styles.userMessageContent,
+                isError && styles.errorMessageContent
+            ]}>
+                {isBot ? (
+                    <Markdown
+                        style={{
+                            body: { color: '#1F2937', fontSize: 16, lineHeight: 22 },
+                            paragraph: { marginBottom: 10 },
+                            bullet_list: { marginBottom: 10 },
+                            ordered_list: { marginBottom: 10 },
+                            bullet_list_item: { marginBottom: 5 },
+                            ordered_list_item: { marginBottom: 5 },
+                            strong: { fontWeight: 'bold', color: '#000' }
+                        }}
+                    >
+                        {message.text}
+                    </Markdown>
+                ) : (
+                    <Text style={[
+                        styles.messageText,
+                        isBot ? styles.botMessageText : styles.userMessageText,
+                        isError && styles.errorMessageText
+                    ]}>
+                        {message.text}
+                    </Text>
+                )}
+
+                <Text style={[
+                    styles.messageTime,
+                    isBot ? styles.botMessageTime : styles.userMessageTime
+                ]}>
+                    {formatTime(message.timestamp)}
+                </Text>
+            </View>
+        </View>
+    );
+};
 
 const ChatBot = ({ navigation, currentUser }) => {
     const { orgSettings } = useConfig();
@@ -152,65 +227,9 @@ const ChatBot = ({ navigation, currentUser }) => {
         }
     };
 
-    // Formater l'heure de manière sécurisée
-    const formatTime = (timestamp) => {
-        try {
-            if (!timestamp) return "";
-            const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
-            return date.toLocaleTimeString('fr-FR', {
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-        } catch (e) {
-            return "";
-        }
-    };
 
-    // Composant Message
-    const MessageBubble = ({ message }) => {
-        const isBot = message.isBot;
-        const isError = message.type === 'error';
 
-        return (
-            <View style={[
-                styles.messageBubble,
-                isBot ? styles.botMessage : styles.userMessage
-            ]}>
-                {isBot && (
-                    <View style={styles.botAvatar}>
-                        <MaterialIcons
-                            name="support-agent"
-                            size={16}
-                            color="#fff"
-                        />
-                    </View>
-                )}
 
-                <View style={[
-                    styles.messageContent,
-                    isBot ? styles.botMessageContent : styles.userMessageContent,
-                    isError && styles.errorMessageContent
-                ]}>
-                    <Text style={[
-                        styles.messageText,
-                        isBot ? styles.botMessageText : styles.userMessageText,
-                        isError && styles.errorMessageText
-                    ]}>
-                        {message.text}
-                    </Text>
-
-                    <Text style={[
-                        styles.messageTime,
-                        isBot ? styles.botMessageTime : styles.userMessageTime
-                    ]}>
-                        {formatTime(message.timestamp)}
-                    </Text>
-                </View>
-            </View>
-        );
-    };
-
-    // Indicateur de frappe
     const TypingIndicator = () => (
         <View style={[styles.messageBubble, styles.botMessage]}>
             <View style={styles.botAvatar}>

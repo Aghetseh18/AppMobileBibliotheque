@@ -25,8 +25,8 @@ const levels = [
     { label: "Niveau 5", value: "level5" }
 ];
 
-const SignUpForm = ({navigation}) => {
-    const {emailHigh, setEmailHigh} = useContext(UserContext);
+const SignUpForm = ({ navigation }) => {
+    const { emailHigh, setEmailHigh } = useContext(UserContext);
     const [selectedLevel, setSelectedLevel] = useState('');
     const [selectedDepartment, setSelectedDepartment] = useState('');
     const [image, setImage] = useState(null);
@@ -34,7 +34,7 @@ const SignUpForm = ({navigation}) => {
     const [departments, setDepartments] = useState([]);
     const [loadingDepartments, setLoadingDepartments] = useState(true);
 
-// Récupération des départements depuis Firestore
+    // Récupération des départements depuis Firestore
     useEffect(() => {
         const fetchDepartments = async () => {
             try {
@@ -109,7 +109,7 @@ const SignUpForm = ({navigation}) => {
             }
 
             let result = await ImagePicker.launchImageLibraryAsync({
-                mediaType: ImagePicker.MediaTypeOptions.Images,
+                mediaType: ImagePicker.MediaType.Images,
                 allowsEditing: true,
                 aspect: [1, 1],
                 quality: 0.8,
@@ -656,7 +656,7 @@ const styles = StyleSheet.create({
     },
     picker: {
         height: 50,
-        color:'#333',
+        color: '#333',
         width: '100%',
         paddingHorizontal: 12,
     },
