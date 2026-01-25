@@ -8,11 +8,14 @@ import {
   Dimensions,
   ImageBackground
 } from 'react-native';
+import useOrgLogo from '../hooks/useOrgLogo';
 
 const WIDTH = Dimensions.get('window').width;
 const HEIGHT = Dimensions.get('window').height;
 
 const InitialScreen = ({ navigation }) => {
+  const { logoUrl } = useOrgLogo();
+
   return (
     <ImageBackground 
       source={require('../../assets/biblio1.jpg')}
@@ -21,7 +24,7 @@ const InitialScreen = ({ navigation }) => {
       <View style={styles.overlay}>
         <View style={styles.logoContainer}>
           <Image
-            source={require('../../assets/enspy.jpg')}
+            source={logoUrl ? { uri: logoUrl } : require('../../assets/enspy.jpg')}
             style={styles.logo}
             resizeMode="contain"
           />

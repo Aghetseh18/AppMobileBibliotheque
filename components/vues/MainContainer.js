@@ -10,6 +10,7 @@ import { useCartCount } from '../utils/cart';
 import { useUnreadChatCount } from '../utils/chat';
 import { useNotificationCount } from '../hooks/useNotificationCount';
 import { useTranslation } from '../hooks/useTranslation';
+import useOrgLogo from '../hooks/useOrgLogo';
 
 
 //Screens
@@ -56,6 +57,7 @@ const Tab = createBottomTabNavigator();
 const MainContainer = ({ navigation, route }) => {
   const { t } = useTranslation();
   const { emailHigh, currentUserNewNav } = useContext(UserContext);
+  const { logoUrl } = useOrgLogo();
   const cartCount = useCartCount(currentUserNewNav?.email);
   const [modal, setModal] = useState(false);
   const [datUser1, setDatUser1] = useState(route.params?.datUser || null);
@@ -192,13 +194,87 @@ const MainContainer = ({ navigation, route }) => {
                     <View style={styles.logoContainer}>
                       <Image
                         style={styles.logo}
-                        source={require('../../assets/enspy.jpg')}
+                        source={logoUrl ? { uri: logoUrl } : require('../../assets/enspy.jpg')}
                       />
                       <Text style={styles.title}>{t('app_title')}</Text>
                     </View>
                     <TouchableOpacity onPress={handlePress}>
                       <FontAwesome name="google" size={24} color="blue" />
                     </TouchableOpacity>
+
+                    <TouchableOpacity onPress={() => navigation.navigate('Panier')} style={styles.cartButton}>
+                      <Ionicons name="cart-outline" size={24} color="black" />
+                      {cartCount > 0 && (
+                        <View style={styles.cartBadge}>
+                          <Text style={styles.cartBadgeText}>{cartCount}</Text>
+                        </View>
+                      )}
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => navigation.navigate('Notifications')} style={styles.notificationButton}>
+                      <Ionicons name="notifications-outline" size={24} color="black" />
+                      {unreadNotificationCount > 0 && (
+                        <View style={styles.notificationBadge}>
+                          <Text style={styles.notificationBadgeText}>{unreadNotificationCount}</Text>
+                        </View>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                </SafeAreaView>
+              ),
+              headerTitleAlign: 'center',
+              headerTitleStyle: { flex: 1, textAlign: 'center' },
+            }}
+          />
+        ) : (
+          <Tab.Screen
+            name={homeName}
+            component={NavShop}
+            options={{
+              tabBarLabel: t('tab_home'),
+              headerTitle: (props) => (
+                <SafeAreaView>
+                  <View style={styles.headerContainer}>
+                    <View style={styles.logoContainer}>
+                      <Image
+                        style={styles.logo}
+                        source={logoUrl ? { uri: logoUrl } : require('../../assets/enspy.jpg')}
+                      />
+                      <Text style={styles.title}>{t('app_title_alt')}</Text>
+                    </View>
+                    <TouchableOpacity onPress={handlePress}>
+                      <FontAwesome name="google" size={24} color="blue" />
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      onPress={() => navigation.navigate('Panier')}
+                      style={styles.cartIconContainer}
+                    >
+                      <Ionicons name="cart-outline" size={24} color="black" />
+                      {cartCount > 0 && (
+                        <View style={styles.badge}>
+                          <Text style={styles.badgeText}>{cartCount}</Text>
+                        </View>
+                      )}
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => navigation.navigate('Notifications')}
+                      style={styles.notificationIconContainer}
+                    >
+                      <Ionicons name="notifications-outline" size={24} color="black" />
+                      {unreadNotificationCount > 0 && (
+                        <View style={styles.notificationBadgeSmall}>
+                          <Text style={styles.notificationBadgeTextSmall}>{unreadNotificationCount}</Text>
+                        </View>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                </SafeAreaView>
+              ),
+              headerTitleAlign: 'center',
+              headerTitleStyle: { flex: 1, textAlign: 'center' },
+            }}
+          />
+        )}
 
                     <TouchableOpacity onPress={() => navigation.navigate('Panier')} style={styles.cartButton}>
                       <Ionicons name="cart-outline" size={24} color="black" />

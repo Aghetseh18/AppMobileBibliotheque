@@ -10,11 +10,14 @@ import {
     Animated
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import useOrgLogo from '../hooks/useOrgLogo';
 
 const WIDTH = Dimensions.get('window').width;
 const HEIGHT = Dimensions.get('window').height;
 
 const LandingPage = ({ navigation }) => {
+    const { logoUrl } = useOrgLogo();
+
     // Animations
     const fadeAnim = new Animated.Value(0);
     const slideAnim = new Animated.Value(50);
@@ -61,7 +64,7 @@ const LandingPage = ({ navigation }) => {
                     ]}
                 >
                     <Image
-                        source={require('../../assets/enspy.jpg')}
+                        source={logoUrl ? { uri: logoUrl } : require('../../assets/enspy.jpg')}
                         style={styles.logo}
                         resizeMode="contain"
                     />
