@@ -5,7 +5,7 @@ import NewNav from './components/navigation/NewNav';
 import { UserContextProvider } from './components/context/UserContext';
 import { FirebaseProvider } from './components/context/FirebaseContext';
 import { ConfigProvider } from './components/context/ConfigContext';
-import { Ionicons, MaterialIcons, FontAwesome } from '@expo/vector-icons'; // <-- import icons you use
+import { Ionicons, MaterialIcons, FontAwesome, MaterialCommunityIcons, FontAwesome5, Feather } from '@expo/vector-icons'; // <-- import icons you use
 
 export default function App() {
   const [fontsLoaded, setFontsLoaded] = useState(false);
@@ -18,6 +18,9 @@ export default function App() {
           ...Ionicons.font,
           ...MaterialIcons.font,
           ...FontAwesome.font,
+          ...MaterialCommunityIcons.font,
+          ...FontAwesome5.font,
+          ...Feather.font,
         });
         setFontsLoaded(true);
       } catch (error) {

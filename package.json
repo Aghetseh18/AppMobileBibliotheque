@@ -61,7 +61,6 @@
     "react-native-svg": "15.8.0",
     "react-native-swiper": "^1.6.0-rc.3",
     "react-native-tab-view": "^4.0.5",
-    "react-native-vector-icons": "^10.2.0",
     "react-native-webview": "13.12.5",
     "yup": "^1.6.1"
   },

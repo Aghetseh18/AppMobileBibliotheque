@@ -7,9 +7,7 @@ import {
 
 import { GEMINI_API_KEY } from "@env";
 
-// REPLACE WITH YOUR NEW API KEY from https://aistudio.google.com/app/apikey
-const apiKey = "AIzaSyCDttAJtVbCh2hRjNI0-g0dwqBL3WmOt7U";
-const genAI = new GoogleGenerativeAI(apiKey);
+const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
 
 const model = genAI.getGenerativeModel({
     model: "gemini-2.5-flash",
