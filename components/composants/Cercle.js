@@ -3,7 +3,7 @@ import React from 'react'
 import { useNavigation } from '@react-navigation/native'
 import { useTranslation } from '../hooks/useTranslation';
 
-const Cercle = ({ cathegorie, image, datUser }) => {
+const Cercle = ({ cathegorie, image, datUser, onPress }) => {
   const navigation = useNavigation();
   const { t } = useTranslation();
 
@@ -14,8 +14,10 @@ const Cercle = ({ cathegorie, image, datUser }) => {
     })
   }
 
+  const handlePress = onPress || voirCathegorie;
+
   return (
-    <TouchableOpacity onPress={voirCathegorie} style={styles.contain}>
+    <TouchableOpacity onPress={handlePress} style={styles.contain}>
       <View style={styles.container}>
         <Image style={{ height: '100%', width: '100%', borderRadius: 60, resizeMode: 'cover' }} source={image} />
       </View>

@@ -1,0 +1,341 @@
+\documentclass[12pt,a4paper]{article}
+
+% -------------------- Packages --------------------
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{mathpazo} % Palatino font for a professional look
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\usepackage[hidelinks]{hyperref} % Clickable links without ugly boxes
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage{float}
+\usepackage{xcolor}
+\usepackage{fancyhdr}
+\usepackage{caption}
+
+% -------------------- Colors & Styling --------------------
+\definecolor{LibraryBlue}{RGB}{0, 51, 102} % Deep academic blue
+\definecolor{SectionColor}{RGB}{0, 76, 153}
+
+% Headings
+\titleformat{\section}
+  {\color{LibraryBlue}\Large\bfseries}
+  {\thesection}{1em}{}[\titlerule]
+
+\titleformat{\subsection}
+  {\color{SectionColor}\large\bfseries}
+  {\thesubsection}{1em}{}
+
+% Lists
+\setlist{noitemsep, topsep=0.5em}
+
+% Header/Footer
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\textit{Library Mobile Application}}
+\fancyhead[R]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% Captions
+\captionsetup[figure]{font=small, labelfont={bf, color=LibraryBlue}, textfont=it}
+
+\begin{document}
+
+% -------------------- Title Page --------------------
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+    
+    {\scshape\LARGE User Documentation \par}
+    \vspace{1cm}
+    {\Huge\bfseries\color{LibraryBlue} Library Mobile Application \par}
+    \vspace{0.5cm}
+    {\large\itshape Your all-in-one digital companion for academic excellence \par}
+    
+    \vspace{2cm}
+    \rule{0.8\textwidth}{1pt}
+    \vspace{2cm}
+    
+    \vfill
+    
+    {\large \today \par}
+\end{titlepage}
+
+% -------------------- TOC --------------------
+\tableofcontents
+\newpage
+
+% -------------------- Introduction --------------------
+\section*{Welcome}
+\addcontentsline{toc}{section}{Welcome}
+
+Welcome to the \textbf{Library Mobile Application}, your all-in-one digital companion for academic excellence, book discovery, and collaborative learning. This guide provides detailed instructions on how to navigate and make the most of the application's features.
+
+% ==================================================
+\section{Getting Started}
+
+\subsection{Welcome Page}
+When you first open the application, you are greeted by a \textbf{Welcome Page}. This screen provides two main options:
+\begin{itemize}
+    \item \textbf{Sign In}: For existing users to access their dashboard.
+    \item \textbf{Sign Up}: For new users to create an academic profile.
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.3\textwidth]{images/first page.jpeg}
+    \caption{Welcome Page}
+\end{figure}
+
+\subsection{Creating an Account (Sign Up)}
+If you are new to the platform:
+\begin{enumerate}
+    \item Tap \textbf{Sign Up} on the welcome page.
+    \item Enter your \textbf{Full Name}, \textbf{Email}, \textbf{Secure Password}, and other details.
+    
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.3\textwidth]{images/Register.jpeg}\hfill
+        \includegraphics[width=0.3\textwidth]{images/register2.jpeg}
+        \caption{Sign Up Process}
+    \end{figure}
+
+    \item Once completed, a verification email will be sent to you.
+    
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.3\textwidth]{images/Verification.jpeg}
+        \caption{Email Verification}
+    \end{figure}
+
+    \item After verification, your account will be created, and you will be automatically logged in.
+\end{enumerate}
+
+\subsection{Accessing Your Account (Sign In)}
+If you already have an account:
+\begin{enumerate}
+    \item Tap \textbf{Sign In} on the welcome page.
+    \item Enter your registered \textbf{Email} and \textbf{Password}.
+    \item Tap the login button to access your Dashboard.
+\end{enumerate}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.3\textwidth]{images/signin.jpeg}
+    \caption{Sign In Screen}
+\end{figure}
+
+% ==================================================
+\section{Main Dashboard \& Navigation}
+
+The application is organised into four primary tabs located at the bottom of the screen:
+
+\begin{itemize}
+    \item \textbf{Home}: Book discovery and library catalog.
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.3\textwidth]{images/cha.jpeg}\hfill
+        \includegraphics[width=0.3\textwidth]{images/Books and thesis.jpeg}
+        \caption{Home Page Interface}
+    \end{figure}
+
+    \item \textbf{E-learning}: Academic courses and learning resources.
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.3\textwidth]{images/eellearning.jpeg}
+        \caption{E-Learning Section}
+    \end{figure}
+
+    \item \textbf{Chat}: Real-time communication with the librarian.
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.3\textwidth]{images/Librarian chat.jpeg}
+        \caption{Real-time Librarian Chat}
+    \end{figure}
+
+    \item \textbf{Settings}: Profile management and configuration.
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.3\textwidth]{images/settingspage.jpeg}\hfill
+        \includegraphics[width=0.3\textwidth]{images/asetting.jpeg}
+        \caption{Settings Overview}
+    \end{figure}
+\end{itemize}
+
+\subsection{Header Utility Bar}
+At the top of most screens, you will find:
+\begin{itemize}
+    \item \textbf{Notifications}: View alerts and updates.
+    \item \textbf{Cart}: Manage selected books or resources.
+    \item \textbf{Global Search}: Search for books, authors, or materials using Google.
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.3\textwidth]{images/bar.jpeg}
+    \caption{Header Utility Bar}
+\end{figure}
+
+% ==================================================
+\section{Library Features}
+
+\subsection{Book Discovery}
+The library offers several discovery tools:
+\begin{itemize}
+    \item \textbf{Popular Books}: Trending and highly-rated titles.
+    \item \textbf{Recommendations}: Personalized book suggestions based on history of books opened.
+    \item \textbf{Books by Departments}: Books organised by academic department.
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.3\textwidth]{images/Books and thesis.jpeg}\hfill
+    \includegraphics[width=0.3\textwidth]{images/books memememe.jpeg}
+    \caption{Book Browsing}
+\end{figure}
+
+\subsection{External Applications}
+Enhance your learning with integrated external platforms:
+\begin{enumerate}
+    \item \textbf{Udemy}: Get free certification courses.
+    \item \textbf{Coursera}: Access certification courses from top companies.
+    \item \textbf{OpenClassroom}: access free training on select topics.
+\end{enumerate}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.3\textwidth]{images/cha.jpeg}\hfill
+    \includegraphics[width=0.3\textwidth]{images/udemy.jpeg}
+    \caption{External Learning Platforms}
+\end{figure}
+
+\subsection{Book Reservation}
+To reserve a book:
+\begin{enumerate}
+    \item \textbf{Search}: Find the book you wish to borrow in the catalogue.
+    \item \textbf{Reserve}: Tap the \textbf{``Reserve''} button on the book details page.
+    \item \textbf{Confirmation}: You will receive a confirmation if the reservation is successful.
+    \item \textbf{Pickup}: Go to the library reception to pick up your book.
+\end{enumerate}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.3\textwidth]{images/see number to reserve.jpeg}
+    \caption{Reservation Flow}
+    % Note: One image path was missing in the original request, kept only the valid one.
+\end{figure}
+
+\subsubsection{Book Details}
+Selecting a book displays:
+\begin{itemize}
+    \item Description and author information.
+    \item Physical or digital availability status.
+    \item Reviews and feedback from other users.
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.3\textwidth]{images/Review and seeing review.jpeg}
+    \caption{Reviews and Details}
+\end{figure}
+
+\begin{itemize}
+    \item[] \textbf{Note}: You can have a maximum of \textbf{3 active reservations} at a time.
+    \item[] Check your current reservations in \textbf{Settings > Notifications}.
+\end{itemize}
+
+% ==================================================
+\section{Communication \& AI Assistance}
+
+\subsection{Real-time Chat}
+The \textbf{Chat} tab allows communication with librarians regarding library-related activities. You can ask questions that the ChatBot is not able to answer.
+
+\subsection{Gemini-Powered ChatBot}
+The floating ChatBot icon provides instant assistance:
+\begin{itemize}
+    \item Book availability inquiries.
+    \item Application navigation support.
+    \item Academic help and summaries.
+    \item Accurate responses using RAG (Retrieval-Augmented Generation).
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.3\textwidth]{images/chatbot.jpeg}
+    \caption{AI Assistance Chat}
+\end{figure}
+
+% ==================================================
+\section{Profile \& Settings}
+
+The \textbf{Settings} page centralises personalization and account management:
+
+\begin{itemize}
+    \item \textbf{Personal Information}: Manage your profile details.
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.3\textwidth]{images/Profile change page.jpeg}
+        \caption{Profile Management}
+    \end{figure}
+
+    \item \textbf{Security}: Update your password and security settings.
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.3\textwidth]{images/changepassword.jpeg}
+        \caption{Password Management}
+    \end{figure}
+
+    \item \textbf{History}: View borrowing and consultation history.
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.3\textwidth]{images/Borrowingspage.jpeg}\hfill
+        \includegraphics[width=0.3\textwidth]{images/History.jpeg}
+        \caption{Borrowings and History}
+    \end{figure}
+
+    \item \textbf{Preferences}: Configure notifications and language settings.
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.3\textwidth]{images/notificationreserveaccepted.jpeg}\hfill
+        \includegraphics[width=0.3\textwidth]{images/language.jpeg}
+        \caption{Notifications and Language}
+    \end{figure}
+
+    \item \textbf{App Info}: Invitations, privacy controls, and support.
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.3\textwidth]{images/sharing app.jpeg}\hfill
+        \includegraphics[width=0.3\textwidth]{images/Appinfo.jpeg}
+        \caption{App Invitation and Info}
+    \end{figure}
+\end{itemize}
+
+% ==================================================
+\section{Troubleshooting \& FAQs}
+
+\noindent\textbf{Q: I didn't receive a notification.}\\
+Ensure notifications are enabled in both device settings and the app's \textbf{Notifications} menu.
+
+\vspace{0.5em}
+
+\noindent\textbf{Q: How do I checkout a book?}\\
+Add the book to your \textbf{Cart} and confirm the checkout request.
+
+\vspace{0.5em}
+
+\noindent\textbf{Q: The ChatBot isn't responding.}\\
+Verify your internet connection, as the AI requires active connectivity.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.3\textwidth]{images/help and support.jpeg}
+    \caption{Help and Troubleshooting}
+\end{figure}
+
+\vspace{2em}
+\begin{center}
+    \textit{Thank you for using the Library Mobile Application. We wish you a productive learning journey.}
+\end{center}
+
+\end{document}

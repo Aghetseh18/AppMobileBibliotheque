@@ -1,5 +1,21 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useMemo } from 'react';
 import { configService } from '../services/configService';
+
+const DEFAULT_THEME = {
+    primary: '#FF6600',
+    primaryLight: '#FF8533',
+    secondary: '#2D3436',
+    background: '#F8F9FA',
+    accent: '#FF4757',
+    surface: '#FFFFFF',
+    text: {
+        primary: '#2D3436',
+        secondary: '#636E72',
+        light: '#B2BEC3',
+        white: '#FFFFFF',
+        muted: '#9E9E9E'
+    }
+};
 
 const ConfigContext = createContext(undefined);
 
@@ -8,6 +24,21 @@ export const ConfigProvider = ({ children }) => {
     const [appSettings, setAppSettings] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
+
+    const theme = useMemo(() => {
+        const primary = orgSettings?.Theme?.Primary || DEFAULT_THEME.primary;
+        const secondary = orgSettings?.Theme?.Secondary || DEFAULT_THEME.secondary;
+
+        return {
+            colors: {
+                ...DEFAULT_THEME,
+                primary,
+                primaryLight: orgSettings?.Theme?.Primary ? orgSettings.Theme.Primary + 'CC' : DEFAULT_THEME.primaryLight,
+                secondary,
+                background: DEFAULT_THEME.background,
+            }
+        };
+    }, [orgSettings]);
 
     const fetchSettings = async () => {
         try {
@@ -71,6 +102,7 @@ export const ConfigProvider = ({ children }) => {
         <ConfigContext.Provider value={{
             orgSettings,
             appSettings,
+            theme,
             isLoading,
             error,
             refetch,

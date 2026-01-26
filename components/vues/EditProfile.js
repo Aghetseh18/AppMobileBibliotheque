@@ -2,10 +2,13 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Image, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { doc, updateDoc } from 'firebase/firestore';
-import { db } from '../../config';
+import { doc, updateDoc, getDoc } from 'firebase/firestore';
+import { db, auth } from '../../config';
+import { updateProfile } from 'firebase/auth';
 import * as ImagePicker from 'expo-image-picker';
 import { useTranslation } from '../hooks/useTranslation';
+
+import { uploadToCloudinary } from '../services/CloudinaryService';
 
 export default function EditProfile({ route, navigation }) {
     const { imageM, nameM, emailM, telM, departM, niveauM } = route.params;
@@ -28,7 +31,7 @@ export default function EditProfile({ route, navigation }) {
             }
 
             const result = await ImagePicker.launchImageLibraryAsync({
-                mediaTypes: ImagePicker.MediaType.Images,
+                mediaTypes: ImagePicker.MediaTypeOptions.Images,
                 allowsEditing: true,
                 aspect: [1, 1],
                 quality: 0.5,
@@ -44,19 +47,54 @@ export default function EditProfile({ route, navigation }) {
     };
 
     const saveProfile = async () => {
-        if (!email) {
-            Alert.alert(t('error'), t('email_required'));
+        const firebaseUser = auth.currentUser;
+        if (!firebaseUser) {
+            Alert.alert(t('error'), t('login_required') || "Vous devez être connecté");
             return;
         }
 
         setSaving(true);
         try {
-            await updateDoc(doc(db, "BiblioUser", email), {
+            let finalImageUri = imageUri;
+
+            // Upload to Cloudinary if it's a new local image
+            if (imageUri && imageUri !== imageM && !imageUri.startsWith('http')) {
+                const uploadedUrl = await uploadToCloudinary(imageUri);
+                if (uploadedUrl) {
+                    finalImageUri = uploadedUrl;
+                } else {
+                    setSaving(false);
+                    return;
+                }
+            }
+
+            // Robust Document Lookup (Email -> UID)
+            let userDocRef = doc(db, "BiblioUser", email);
+            let userDoc = await getDoc(userDocRef);
+
+            if (!userDoc.exists()) {
+                userDocRef = doc(db, "BiblioUser", firebaseUser.uid);
+                userDoc = await getDoc(userDocRef);
+            }
+
+            if (!userDoc.exists()) {
+                throw new Error("Utilisateur non trouvé dans la base de données");
+            }
+
+            // Update Firestore
+            await updateDoc(userDocRef, {
                 name,
                 tel,
                 departement: depart,
                 niveau,
-                imageUri
+                profilePicture: finalImageUri,
+                imageUri: finalImageUri // Keep legacy field for compatibility
+            });
+
+            // Update Firebase Auth Profile
+            await updateProfile(firebaseUser, {
+                displayName: name,
+                photoURL: finalImageUri || null
             });
 
             Alert.alert(t('success'), t('profile_update_success'));

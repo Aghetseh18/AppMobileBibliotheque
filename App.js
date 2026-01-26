@@ -5,6 +5,7 @@ import NewNav from './components/navigation/NewNav';
 import { UserContextProvider } from './components/context/UserContext';
 import { FirebaseProvider } from './components/context/FirebaseContext';
 import { ConfigProvider } from './components/context/ConfigContext';
+import { AuthProvider } from './components/context/AuthContext';
 import { Ionicons, MaterialIcons, FontAwesome, MaterialCommunityIcons, FontAwesome5, Feather } from '@expo/vector-icons'; // <-- import icons you use
 import ClientAlertModal from './components/alerts/ClientAlertModal';
 import MaintenanceGate from './components/alerts/MaintenanceGate';
@@ -45,12 +46,14 @@ export default function App() {
   return (
     <ConfigProvider>
       <FirebaseProvider>
-        <UserContextProvider>
-          <MaintenanceGate>
-            <ClientAlertModal />
-            <NewNav />
-          </MaintenanceGate>
-        </UserContextProvider>
+        <AuthProvider>
+          <UserContextProvider>
+            <MaintenanceGate>
+              <ClientAlertModal />
+              <NewNav />
+            </MaintenanceGate>
+          </UserContextProvider>
+        </AuthProvider>
       </FirebaseProvider>
     </ConfigProvider>
   );

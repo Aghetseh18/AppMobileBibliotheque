@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState, useMemo } from 'react';
 import {
   ActivityIndicator,
   Dimensions,
@@ -42,6 +42,7 @@ import FontAwesome from '@expo/vector-icons/FontAwesome';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { MaterialCommunityIcons, Ionicons } from "@expo/vector-icons";
 import { useTranslation } from '../hooks/useTranslation';
+import { useConfig } from '../context/ConfigContext';
 
 // Constants
 const { width: WIDTH, height: HEIGHT } = Dimensions.get('screen');
@@ -72,6 +73,18 @@ const COLORS = {
 const VueUn = (props) => {
   // Context and state
   const { currentUserNewNav, datUser, datUserTest } = useContext(UserContext) || {};
+  const { orgSettings } = useConfig();
+  const config = { orgSettings }; // Keep variable for logging if needed
+  console.log("DEBUG orgSettings:", JSON.stringify(orgSettings, null, 2));
+
+  // Dynamic Colors
+  const colors = useMemo(() => ({
+    ...COLORS,
+    primary: orgSettings?.Theme?.Primary || COLORS.primary,
+    primaryLight: orgSettings?.Theme?.Primary ? orgSettings.Theme.Primary + 'CC' : COLORS.primaryLight,
+    secondary: orgSettings?.Theme?.Secondary || COLORS.secondary,
+    background: COLORS.background, // User didn't override background in JSON
+  }), [orgSettings]);
   const { t } = useTranslation();
   const [dataWeb, setDataWeb] = useState([]);
   const [loaderWeb, setLoaderWeb] = useState(true);
@@ -82,6 +95,7 @@ const VueUn = (props) => {
   const [loadingRecommendations, setLoadingRecommendations] = useState(false);
   const [memoireData, setMemoireData] = useState([]);
   const [memoireLoader, setMemoireLoader] = useState(true);
+  const [departementsData, setDepartementsData] = useState([]);
 
   // Helper: Get Greeting based on time
   const getGreeting = () => {
@@ -91,7 +105,6 @@ const VueUn = (props) => {
     return t('good_evening');
   };
 
-  // ... (Keep existing fetch logic) ...
   // Network helper function
   const fetchWithTimeout = async (url, options = {}, timeout = 10000) => {
     const controller = new AbortController();
@@ -215,6 +228,22 @@ const VueUn = (props) => {
     }
   };
 
+  const fetchDepartements = () => {
+    try {
+      const q = query(collection(db, 'Departements'));
+      return onSnapshot(q, (snapshot) => {
+        const items = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        setDepartementsData(items);
+      });
+    } catch (error) {
+      console.error(error);
+      return () => { };
+    }
+  };
+
   const fetchMemoires = () => {
     try {
       const memoireRef = collection(db, 'BiblioThesis');
@@ -270,12 +299,33 @@ const VueUn = (props) => {
     if (!currentUserNewNav?.email) {
       setLoaderWeb(false); setMemoireLoader(false); return;
     }
-    const qLivres = query(collection(db, 'BiblioWeb'), orderBy('name', 'asc'));
+    const qLivres = query(collection(db, 'OnlineCourses'), orderBy('name', 'asc'));
     const unsubscribeLivres = onSnapshot(qLivres, (s) => {
-      const items = []; s.forEach((d) => items.push(d.data())); setDataWeb(items); setLoaderWeb(false);
+      const items = [];
+      s.forEach((d) => {
+        const data = d.data();
+        items.push({
+          id: d.id,
+          ...data,
+          name: data.name || data.title || 'Untitled',
+          image: data.image,
+          chemin: data.chemin || data.url || data.link || '',
+        });
+      });
+      console.log('OnlineCourses items:', items.length);
+      setDataWeb(items);
+      setLoaderWeb(false);
     });
+
+    // Fetch departments
+    const unsubscribeDepartements = fetchDepartements();
     const unsubscribeMemoires = fetchMemoires();
-    return () => { unsubscribeLivres(); if (unsubscribeMemoires) unsubscribeMemoires(); };
+
+    return () => {
+      unsubscribeLivres();
+      if (unsubscribeMemoires) unsubscribeMemoires();
+      if (unsubscribeDepartements) unsubscribeDepartements();
+    };
   }, [currentUserNewNav?.email]);
 
   const handleMemoireClick = (categorieMemoire) => {
@@ -293,10 +343,14 @@ const VueUn = (props) => {
       <View style={styles.loginContainer}>
         <StatusBar barStyle="dark-content" />
         <View style={styles.loginContent}>
-          <Image source={require('../../assets/ensp.png')} style={styles.loginLogo} resizeMode="contain" />
-          <Text style={styles.loginTitle}>{t('welcome')}</Text>
+          <Image
+            source={orgSettings?.Logo ? { uri: orgSettings.Logo } : require('../../assets/ensp.png')}
+            style={[styles.loginLogo, { tintColor: colors.primary }]}
+            resizeMode="contain"
+          />
+          <Text style={styles.loginTitle}>{orgSettings?.Name || t('welcome')}</Text>
           <Text style={styles.loginSubtitle}>{t('login_subtitle')}</Text>
-          <TouchableOpacity style={styles.loginButton} onPress={() => props.navigation.navigate('LoginScreen')}>
+          <TouchableOpacity style={[styles.loginButton, { backgroundColor: colors.primary }]} onPress={() => props.navigation.navigate('LoginScreen')}>
             <Text style={styles.loginButtonText}>{t('login_btn')}</Text>
           </TouchableOpacity>
         </View>
@@ -320,7 +374,7 @@ const VueUn = (props) => {
       <View style={styles.cardImageContainer}>
         <Image source={{ uri: item.image }} style={styles.cardImage} resizeMode="cover" />
         {isRecommendation && (
-          <View style={styles.badgeContainer}>
+          <View style={[styles.badgeContainer, { backgroundColor: colors.primary }]}>
             <Text style={styles.badgeText}>{Math.round(item.similarity_score || 0)}% {t('match')}</Text>
           </View>
         )}
@@ -346,11 +400,11 @@ const VueUn = (props) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor={COLORS.primary} />
+      <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
 
       {/* Header / Hero Section Refined */}
       <LinearGradient
-        colors={[COLORS.primary, COLORS.primaryLight]}
+        colors={[colors.primary, colors.primaryLight]}
         start={{ x: 0.1, y: 0 }} end={{ x: 0.9, y: 1 }}
         style={styles.headerContainer}
       >
@@ -383,7 +437,7 @@ const VueUn = (props) => {
         <View style={styles.section}>
           <SectionHeader
             title={t('e_learning')}
-            icon={<FontAwesome name="graduation-cap" size={20} color={COLORS.primary} style={styles.sectionIcon} />}
+            icon={<FontAwesome name="graduation-cap" size={20} color={colors.primary} style={styles.sectionIcon} />}
             subtitle={t('e_learning_sub')}
           />
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalList}>
@@ -396,7 +450,7 @@ const VueUn = (props) => {
           <View style={styles.section}>
             <SectionHeader
               title={t('for_you')}
-              icon={<MaterialIcons name="recommend" size={22} color={COLORS.primary} style={styles.sectionIcon} />}
+              icon={<MaterialIcons name="recommend" size={22} color={colors.primary} style={styles.sectionIcon} />}
               subtitle={t('for_you_sub')}
             />
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalList}>
@@ -459,42 +513,56 @@ const VueUn = (props) => {
           </View>
 
           {activeTab === 'departement' ? (
-            <View style={styles.gridContainer}>
-              <View style={styles.row}>
-                <Cercle id="" datUser={datUser} image={imgMeca} cathegorie="Genie Mecanique" props={props} />
-                <Cercle id="" datUser={datUser} image={imgInfo} cathegorie="Genie Informatique" props={props} />
-                <Cercle id="" datUser={datUser} image={imgMath} cathegorie="Mathematique" props={props} />
-              </View>
-              <View style={styles.row}>
-                <Cercle id="" datUser={datUser} image={imgElec} cathegorie="Genie Electrique" props={props} />
-                <Cercle id="" datUser={datUser} image={imgPhysik} cathegorie="Physique" props={props} />
-                <Cercle id="" datUser={datUser} image={imgTelcom} cathegorie="Genie Telecom" props={props} />
-              </View>
+            <View style={[styles.gridContainer, { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center' }]}>
+              {departementsData.map((dept, index) => (
+                <View key={dept.id || index} style={{ margin: 10 }}>
+                  <Cercle
+                    id={dept.id}
+                    datUser={datUser}
+                    // If image is URL, pass uri object. If it's a local require (unlikely from DB), handle appropriately. 
+                    // Assuming DB stores URLs.
+                    image={dept.image ? { uri: dept.image } : imgInfo}
+                    cathegorie={dept.name || dept.nom || dept.id || 'N/A'}
+                    props={props}
+                  />
+                </View>
+              ))}
+              {departementsData.length === 0 && (
+                <Text style={{ padding: 20, color: COLORS.text.secondary }}>{t('no_data') || 'Aucun département trouvé'}</Text>
+              )}
             </View>
           ) : (
-            <View style={styles.gridContainer}>
-              <View style={styles.row}>
-                <TouchableOpacity onPress={() => handleMemoireClick('Genie Informatique')}>
-                  <Cercle id="" datUser={datUser} image={imgMemGI} cathegorie="Memoire GI" />
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => handleMemoireClick('Genie Civil')}>
-                  <Cercle id="" datUser={datUser} image={imgMemGC} cathegorie="Memoire GC" />
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => handleMemoireClick('Genie Mecanique')}>
-                  <Cercle id="" datUser={datUser} image={imgMemGM} cathegorie="Memoire GM" />
-                </TouchableOpacity>
-              </View>
-              <View style={styles.row}>
-                <TouchableOpacity onPress={() => handleMemoireClick('INDUSTRIEL')}>
-                  <Cercle id="" datUser={datUser} image={imgMemGInd} cathegorie="Memoire GInd" />
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => handleMemoireClick('Genie electrique')}>
-                  <Cercle id="" datUser={datUser} image={imgMemGEle} cathegorie="Genie electrique" />
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => handleMemoireClick('Genie Telecom')}>
-                  <Cercle id="" datUser={datUser} image={imgMemGTel} cathegorie="Memoire GTel" />
-                </TouchableOpacity>
-              </View>
+            <View style={[styles.gridContainer, { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center' }]}>
+              {memoireLoader ? (
+                <View style={{ padding: 40 }}>
+                  <ActivityIndicator size="large" color={colors.primary} />
+                </View>
+              ) : (
+                (() => {
+                  const uniqueCats = [...new Set(memoireData.map(m => m.département || m.cathegorie).filter(Boolean))].sort();
+                  if (uniqueCats.length === 0) return <Text style={{ padding: 20, color: COLORS.text.secondary }}>{t('no_data') || 'Aucun mémoire trouvé'}</Text>;
+
+                  return uniqueCats.map((cat, index) => {
+                    const dept = departementsData.find(d =>
+                      (d.name && d.name.toLowerCase() === cat.toLowerCase()) ||
+                      (d.nom && d.nom.toLowerCase() === cat.toLowerCase())
+                    );
+                    const image = dept?.image ? { uri: dept.image } : imgMemGI;
+
+                    return (
+                      <View key={index} style={{ margin: 10 }}>
+                        <Cercle
+                          id={index}
+                          datUser={datUser}
+                          image={image}
+                          cathegorie={cat}
+                          onPress={() => handleMemoireClick(cat)}
+                        />
+                      </View>
+                    );
+                  });
+                })()
+              )}
             </View>
           )}
         </View>
@@ -801,23 +869,20 @@ const styles = StyleSheet.create({
   tabText: {
     fontSize: 14,
     fontWeight: '600',
-    color: COLORS.text.secondary
+    color: COLORS.text.secondary,
   },
   activeTabText: {
-    color: COLORS.text.white
+    color: COLORS.text.white,
+    fontWeight: '700',
   },
-
-  // Grid
   gridContainer: {
-    paddingHorizontal: 15
+    paddingHorizontal: 10,
   },
   row: {
     flexDirection: 'row',
-    justifyContent: 'center', // Changed to center since we have exactly 3 items mostly
-    marginBottom: 15,
-    flexWrap: 'wrap',
-    gap: 15 // Use gap for spacing between circles
-  }
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
 });
 
 export default VueUn;

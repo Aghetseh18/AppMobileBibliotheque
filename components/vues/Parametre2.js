@@ -2,17 +2,21 @@ import { View, Text, Image, TouchableOpacity, Dimensions, TextInput, StyleSheet,
 import React, { useEffect, useState } from 'react'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { Ionicons } from '@expo/vector-icons';
-import { db, storage } from '../../config'
+import { db, storage, auth } from '../../config'
 import * as ImagePicker from 'expo-image-picker'
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage"
-import { doc, updateDoc } from "firebase/firestore"
+import { doc, updateDoc, getDoc } from "firebase/firestore"
+import { updateProfile } from "firebase/auth"
 import { v4 } from "uuid"
 import Dialog from "react-native-dialog"
+import { uploadToCloudinary } from '../services/CloudinaryService';
+import { useConfig } from '../context/ConfigContext';
 
 const WIDTH = Dimensions.get('screen').width
 const HEIGHT = Dimensions.get('screen').height
 
 const Parametre2 = (props) => {
+  const { theme } = useConfig();
   const { imageM, nameM, emailM, telM, departM, niveauM } = props.route.params
   const [name, setname] = useState(nameM || "")
   const [tel, settel] = useState(telM || '')
@@ -37,7 +41,7 @@ const Parametre2 = (props) => {
   const pickImage = async () => {
     try {
       let result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaType.Images,
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
         aspect: [1, 1],
         quality: 0.5
@@ -70,31 +74,61 @@ const Parametre2 = (props) => {
   }
 
   const handleSave = async () => {
+    const firebaseUser = auth.currentUser;
+    if (!firebaseUser) {
+      alert("Vous devez être connecté");
+      return;
+    }
+
     try {
       setUploading(true)
       let imageUrl = imageUser
 
       if (changeImage && image2) {
-        const newImageUrl = await uploadImage(image2)
+        const newImageUrl = await uploadToCloudinary(image2)
         if (newImageUrl) {
           imageUrl = newImageUrl
+        } else {
+          // Failed upload
+          setUploading(false);
+          setVisible(false);
+          return;
         }
       }
 
-      const userRef = doc(db, 'BiblioUser', emailM)
-      await updateDoc(userRef, {
+      // Robust Document Lookup (Email -> UID)
+      let userDocRef = doc(db, 'BiblioUser', emailM);
+      let userDoc = await getDoc(userDocRef);
+
+      if (!userDoc.exists()) {
+        userDocRef = doc(db, "BiblioUser", firebaseUser.uid);
+        userDoc = await getDoc(userDocRef);
+      }
+
+      if (!userDoc.exists()) {
+        throw new Error("Utilisateur non trouvé dans la base de données");
+      }
+
+      await updateDoc(userDocRef, {
         name: name || nameM,
         niveau: niveau || niveauM,
         tel: tel || telM,
         departement: depart || departM,
-        ...(imageUrl ? { imageUri: imageUrl } : {})
+        profilePicture: imageUrl,
+        imageUri: imageUrl // Legacy compatibility
       })
+
+      // Update Firebase Auth Profile
+      await updateProfile(firebaseUser, {
+        displayName: name || nameM,
+        photoURL: imageUrl || null
+      });
 
       alert("Profil mis à jour avec succès!")
       props.navigation.goBack()
     } catch (error) {
       console.error("Erreur lors de la mise à jour:", error)
-      alert("Erreur lors de la mise à jour du profil")
+      alert("Erreur lors de la mise à jour du profil: " + error.message)
     } finally {
       setUploading(false)
       setVisible(false)
@@ -166,7 +200,7 @@ const Parametre2 = (props) => {
                 position: 'absolute',
                 bottom: 5,
                 right: 5,
-                backgroundColor: '#FF8A50',
+                backgroundColor: theme.colors.primary,
                 borderRadius: 15,
                 padding: 8,
                 elevation: 5,

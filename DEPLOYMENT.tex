@@ -1,0 +1,99 @@
+\documentclass[12pt,a4paper]{article}
+
+% -------------------- Packages --------------------
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{mathpazo} 
+\usepackage[margin=1in]{geometry}
+\usepackage{xcolor}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{listings}
+\usepackage[hidelinks]{hyperref}
+
+% -------------------- Styling --------------------
+\definecolor{LibraryBlue}{RGB}{0, 51, 102}
+\definecolor{CodeGray}{RGB}{240, 240, 240}
+
+% Headings
+\titleformat{\section}{\color{LibraryBlue}\Large\bfseries}{\thesection}{1em}{}[\titlerule]
+\titleformat{\subsection}{\color{LibraryBlue}\large\bfseries}{\thesubsection}{1em}{}
+
+% Code Blocks
+\lstset{
+    backgroundcolor=\color{CodeGray},
+    basicstyle=\ttfamily\small,
+    frame=single,
+    breaklines=true,
+    columns=fullflexible
+}
+
+% Header/Footer
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\textit{Deployment Documentation}}
+\fancyhead[R]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\begin{document}
+
+\section{Deployment \& DevOps}
+
+This chapter details the technical infrastructure, build processes, and continuous integration pipelines established for the Library Mobile Application.
+
+\subsection{Development Environment Configuration}
+The application is built using the **Expo** framework on top of **React Native**. Setting up a consistent development environment is critical for reproducibility.
+
+\subsubsection{Prerequisites}
+\begin{itemize}
+    \item \textbf{Node.js}: Runtime environment (v20+ recommended).
+    \item \textbf{Expo CLI}: Command-line interface for running and managing Expo projects.
+    \item \textbf{EAS CLI}: Expo Application Services tool for cloud builds.
+    \item \textbf{Firebase}: Helper tools for backend management.
+\end{itemize}
+
+\subsection{Build Architecture (EAS)}
+We utilize **Expo Application Services (EAS)** for generating production-ready binaries. The configuration is defined in \texttt{eas.json}, specifying three distinct environments:
+
+\begin{enumerate}
+    \item \textbf{Development}: Generates a development client for rapid testing on physical devices.
+    \item \textbf{Preview}: Produces a standalone APK for internal distribution and QA testing.
+    \item \textbf{Production}: optimized builds signing for Google Play Store submission.
+\end{enumerate}
+
+\subsubsection{Manual Build Command}
+To trigger a manual build for Android, the following command is executed:
+\begin{lstlisting}
+eas build --platform android --profile preview
+\end{lstlisting}
+
+\subsection{Continuous Integration (CI/CD)}
+To ensure code quality and automate delivery, we have implemented a CI/CD pipeline using **GitHub Actions**.
+
+\subsubsection{Workflow Definition}
+The workflow is defined in \texttt{.github/workflows/build.yml} and is triggered on:
+\begin{itemize}
+    \item Pushes to the \texttt{main} branch.
+    \item Pull Requests targeting the \texttt{main} branch.
+\end{itemize}
+
+\subsubsection{Pipeline Steps}
+The automated pipeline executes the following sequence:
+\begin{enumerate}
+    \item \textbf{Checkout}: Retrieves the latest code from the repository.
+    \item \textbf{Setup}: Initializes the Node.js environment.
+    \item \textbf{Dependency Installation}: Runs \texttt{npm ci} for a clean install.
+    \item \textbf{Authentication}: Authenticates with Expo using the \texttt{EXPO\_TOKEN} secret.
+    \item \textbf{Build}: Executes the non-interactive EAS build process.
+    \item \textbf{Artifact Upload}: Stores the resulting APK as a downloadable artifact for review.
+\end{enumerate}
+
+\subsection{Backend Integration}
+The application relies on **Firebase** for backend services.
+\begin{itemize}
+    \item \textbf{Authentication}: Manages user sessions and academic identities.
+    \item \textbf{Firestore}: NoSQL database for storing user profiles, book catalogs, and borrowing history.
+\end{itemize}
+API keys are securely managed via environment configurations files (`firebaseConfig.js` and `gemini.js`).
+
+\end{document}

@@ -1,28 +1,28 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Alert } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Linking, Platform } from 'react-native';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useTranslation } from '../hooks/useTranslation';
 
 export default function SecuritySettings({ navigation }) {
     const { t } = useTranslation();
-    const [twoFactorAuth, setTwoFactorAuth] = useState(false);
-    const [loginNotifications, setLoginNotifications] = useState(true);
-    const [dataCollection, setDataCollection] = useState(true);
-
-    const handleTwoFactorToggle = (value) => {
-        if (value) {
-            Alert.alert(
-                t('two_factor'),
-                t('feature_coming_soon'),
-                [{ text: t('ok') }]
-            );
-        } else {
-            setTwoFactorAuth(value);
-        }
-    };
 
     const handleChangePassword = () => {
         navigation.navigate('ChangePassword');
+    };
+
+    const handleOpenSettings = () => {
+        Linking.openSettings().catch(() => {
+            Alert.alert(t('error'), t('cannot_open_settings'));
+        });
+    };
+
+    const handleContactPrivacy = () => {
+        const email = 'support@enspy-library.com';
+        const subject = t('privacy_inquiry');
+        const body = t('privacy_inquiry_body');
+        Linking.openURL(`mailto:${email}?subject=${subject}&body=${body}`).catch(() => {
+            Alert.alert(t('error'), t('cannot_open_email'));
+        });
     };
 
     const handleDeleteAccount = () => {
@@ -35,18 +35,18 @@ export default function SecuritySettings({ navigation }) {
                     text: t('delete'),
                     style: 'destructive',
                     onPress: () => {
-                        Alert.alert(t('val_information'), t('delete_account_contact_admin'));
+                        // In a real app, this would call an API
+                        Alert.alert(t('request_sent'), t('delete_account_contact_admin'));
                     }
                 }
             ]
         );
     };
 
-    const renderSettingItem = ({ icon, iconColor, title, subtitle, action, toggle, value, dangerous = false }) => (
+    const renderSettingItem = ({ icon, iconColor, title, subtitle, action, dangerous = false }) => (
         <TouchableOpacity
             style={styles.settingItem}
             onPress={action}
-            disabled={toggle}
         >
             <View style={[styles.settingIconContainer, { backgroundColor: iconColor + '20' }]}>
                 {icon}
@@ -55,18 +55,7 @@ export default function SecuritySettings({ navigation }) {
                 <Text style={[styles.settingTitle, dangerous && styles.dangerousText]}>{title}</Text>
                 {subtitle && <Text style={styles.settingSubtitle}>{subtitle}</Text>}
             </View>
-            {toggle && (
-                <Switch
-                    value={value}
-                    onValueChange={action}
-                    trackColor={{ false: "#D1D1D6", true: "#FF8A5030" }}
-                    thumbColor={value ? "#FF8A50" : "#F4F4F4"}
-                    ios_backgroundColor="#D1D1D6"
-                />
-            )}
-            {!toggle && (
-                <MaterialIcons name="arrow-forward-ios" size={16} color="#A1A1A1" />
-            )}
+            <MaterialIcons name="arrow-forward-ios" size={16} color="#A1A1A1" />
         </TouchableOpacity>
     );
 
@@ -74,7 +63,7 @@ export default function SecuritySettings({ navigation }) {
         <View style={styles.container}>
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                    <Ionicons name="arrow-back" size={24} color="#FF8A50" />
+                    <Ionicons name="arrow-back" size={24} color="#FF6600" />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>{t('security_title')}</Text>
                 <View style={{ width: 24 }} />
@@ -92,53 +81,26 @@ export default function SecuritySettings({ navigation }) {
                         subtitle: t('change_pwd_subtitle'),
                         action: handleChangePassword
                     })}
-
-                    {renderSettingItem({
-                        icon: <MaterialIcons name="security" size={20} color="#4CAF50" />,
-                        iconColor: "#4CAF50",
-                        title: t('two_factor'),
-                        subtitle: t('two_factor_subtitle'),
-                        toggle: true,
-                        value: twoFactorAuth,
-                        action: handleTwoFactorToggle
-                    })}
                 </View>
 
-                {/* Section Notifications */}
+                {/* Section Permissions et Confidentialité */}
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>{t('security_notifications')}</Text>
+                    <Text style={styles.sectionTitle}>{t('privacy_permissions')}</Text>
 
                     {renderSettingItem({
-                        icon: <Ionicons name="notifications-outline" size={20} color="#FF9800" />,
-                        iconColor: "#FF9800",
-                        title: t('login_alerts'),
-                        subtitle: t('login_alerts_subtitle'),
-                        toggle: true,
-                        value: loginNotifications,
-                        action: setLoginNotifications
-                    })}
-                </View>
-
-                {/* Section Confidentialité */}
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>{t('data_privacy')}</Text>
-
-                    {renderSettingItem({
-                        icon: <MaterialIcons name="analytics" size={20} color="#2196F3" />,
+                        icon: <Ionicons name="settings-outline" size={20} color="#2196F3" />,
                         iconColor: "#2196F3",
-                        title: t('data_collection'),
-                        subtitle: t('data_collection_subtitle'),
-                        toggle: true,
-                        value: dataCollection,
-                        action: setDataCollection
+                        title: t('system_permissions'),
+                        subtitle: t('system_permissions_desc'),
+                        action: handleOpenSettings
                     })}
 
                     {renderSettingItem({
-                        icon: <MaterialIcons name="download" size={20} color="#9C27B0" />,
-                        iconColor: "#9C27B0",
-                        title: t('download_data'),
-                        subtitle: t('download_data_subtitle'),
-                        action: () => Alert.alert(t('val_information'), t('feature_coming_soon'))
+                        icon: <MaterialIcons name="privacy-tip" size={20} color="#4CAF50" />,
+                        iconColor: "#4CAF50",
+                        title: t('privacy_contact'),
+                        subtitle: t('privacy_contact_desc'),
+                        action: handleContactPrivacy
                     })}
                 </View>
 
@@ -156,15 +118,12 @@ export default function SecuritySettings({ navigation }) {
                     })}
                 </View>
 
-                {/* Informations légales */}
-                <View style={styles.legalSection}>
-                    <Text style={styles.legalTitle}>{t('legal_info')}</Text>
-                    <TouchableOpacity style={styles.legalItem}>
-                        <Text style={styles.legalText}>{t('privacy_policy')}</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.legalItem}>
-                        <Text style={styles.legalText}>{t('terms_of_use')}</Text>
-                    </TouchableOpacity>
+                {/* Note d'information */}
+                <View style={styles.infoContainer}>
+                    <Ionicons name="information-circle-outline" size={20} color="#64748B" />
+                    <Text style={styles.infoText}>
+                        {t('security_note')}
+                    </Text>
                 </View>
             </ScrollView>
         </View>
@@ -202,63 +161,61 @@ const styles = StyleSheet.create({
         marginBottom: 24,
     },
     sectionTitle: {
-        fontSize: 16,
+        fontSize: 14,
         fontWeight: '600',
-        color: '#8E8E93',
+        color: '#64748B',
         marginLeft: 16,
         marginBottom: 8,
-        marginTop: 8,
+        marginTop: 16,
+        textTransform: 'uppercase',
+        letterSpacing: 0.5
     },
     settingItem: {
         flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: '#FFFFFF',
-        paddingVertical: 12,
+        paddingVertical: 14,
         paddingHorizontal: 16,
-        marginBottom: 1,
+        borderBottomWidth: 1,
+        borderBottomColor: '#F1F5F9',
     },
     settingIconContainer: {
         width: 36,
         height: 36,
-        borderRadius: 18,
+        borderRadius: 8,
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 12,
+        marginRight: 16,
     },
     settingContent: {
         flex: 1,
     },
     settingTitle: {
         fontSize: 16,
-        color: '#000000',
+        color: '#1E293B',
         fontWeight: '500',
     },
     settingSubtitle: {
         fontSize: 13,
-        color: '#8E8E93',
+        color: '#64748B',
         marginTop: 2,
     },
     dangerousText: {
-        color: '#FF3B30',
+        color: '#EF4444',
     },
-    legalSection: {
-        backgroundColor: '#FFFFFF',
-        marginHorizontal: 16,
-        borderRadius: 12,
-        padding: 16,
-        marginBottom: 40,
+    infoContainer: {
+        flexDirection: 'row',
+        backgroundColor: '#F1F5F9',
+        margin: 16,
+        padding: 12,
+        borderRadius: 8,
+        alignItems: 'center'
     },
-    legalTitle: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: '#000000',
-        marginBottom: 12,
-    },
-    legalItem: {
-        paddingVertical: 8,
-    },
-    legalText: {
-        fontSize: 14,
-        color: '#FF8A50',
-    },
+    infoText: {
+        fontSize: 12,
+        color: '#64748B',
+        marginLeft: 8,
+        flex: 1,
+        lineHeight: 16
+    }
 });

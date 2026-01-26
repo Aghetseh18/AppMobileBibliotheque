@@ -10,7 +10,7 @@ const WIDTH = Dimensions.get('window').height;
 
 const Cathegorie = ({ route, navigation }) => {
   const { t } = useTranslation();
-  const { cathegorie } = route.params || {};
+  const { cathegorie, isMemoire } = route.params || {};
   const { currentUserdata } = useContext(UserContextNavApp) || {};
   const [data, setData] = useState([]);
   const [loader, setLoader] = useState(true);
@@ -26,7 +26,8 @@ const Cathegorie = ({ route, navigation }) => {
         let allItems = [];
 
         // Déterminer si c'est une catégorie de mémoires
-        const isMemoireCategory = cathegorie && cathegorie.toLowerCase().includes('memoire');
+        // Support explicit prop OR legacy string check
+        const isMemoireCategory = isMemoire === true || (cathegorie && cathegorie.toLowerCase().includes('memoire'));
 
         if (isMemoireCategory) {
           // Charger depuis la collection Memoire
@@ -36,7 +37,6 @@ const Cathegorie = ({ route, navigation }) => {
 
           memoireSnapshot.forEach((doc) => {
             const data = doc.data();
-            console.log('Mémoire trouvé:', data);
             allItems.push({
               ...data,
               id: doc.id,
@@ -44,9 +44,9 @@ const Cathegorie = ({ route, navigation }) => {
             });
           });
 
-          // Filtrer par catégorie de mémoire avec mapping corrigé
-          if (cathegorie !== 'Memoire') {
-            // Mapping des catégories de mémoires vers les départements
+          // Filtrer par catégorie de mémoire
+          if (cathegorie && cathegorie !== 'Memoire') {
+            // Mapping des catégories de mémoires vers les départements (Legacy)
             const categoryMap = {
               'Memoire GI': 'Genie Informatique',
               'Memoire GC': 'Genie Civil',
@@ -56,14 +56,16 @@ const Cathegorie = ({ route, navigation }) => {
               'Memoire GTel': 'Genie Telecom'
             };
 
-            const targetDepartment = categoryMap[cathegorie];
+            // Use mapped department OR raw category name
+            const targetDepartment = categoryMap[cathegorie] || cathegorie;
+
             console.log(`Filtrage pour ${cathegorie} -> département: ${targetDepartment}`);
 
             if (targetDepartment) {
               allItems = allItems.filter(item => {
-                const itemDept = item.département || item.departement;
-                const matches = itemDept === targetDepartment;
-                console.log(`Mémoire "${item.theme || item.name}" - Département: "${itemDept}" - Match: ${matches}`);
+                const itemDept = item.département || item.departement || item.cathegorie; // Fallback to cathegorie field if dept missing
+                // Case insensitive check just in case
+                const matches = itemDept && itemDept.toLowerCase() === targetDepartment.toLowerCase();
                 return matches;
               });
             }

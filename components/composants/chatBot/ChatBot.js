@@ -37,6 +37,7 @@ const formatTime = (timestamp) => {
 };
 
 const MessageBubble = ({ message }) => {
+    const { theme } = useConfig();
     const isBot = message.isBot;
     const isError = message.type === 'error';
 
@@ -46,7 +47,7 @@ const MessageBubble = ({ message }) => {
             isBot ? styles.botMessage : styles.userMessage
         ]}>
             {isBot && (
-                <View style={styles.botAvatar}>
+                <View style={[styles.botAvatar, { backgroundColor: theme.colors.primary }]}>
                     <MaterialIcons
                         name="support-agent"
                         size={16}
@@ -57,7 +58,7 @@ const MessageBubble = ({ message }) => {
 
             <View style={[
                 styles.messageContent,
-                isBot ? styles.botMessageContent : styles.userMessageContent,
+                isBot ? styles.botMessageContent : [styles.userMessageContent, { backgroundColor: theme.colors.primary }],
                 isError && styles.errorMessageContent
             ]}>
                 {isBot ? (
@@ -96,7 +97,7 @@ const MessageBubble = ({ message }) => {
 };
 
 const ChatBot = ({ navigation, currentUser }) => {
-    const { orgSettings } = useConfig();
+    const { orgSettings, theme } = useConfig();
     const [messages, setMessages] = useState([]);
     const [inputText, setInputText] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -180,7 +181,9 @@ const ChatBot = ({ navigation, currentUser }) => {
 
         try {
             // 4. Récupération du contexte RAG (Firestore)
+            console.log("Calling assistant.queryKnowledgeBase...");
             const context = await assistant.queryKnowledgeBase(textToSend, orgSettings);
+            console.log("Context retrieved:", context ? "Found" : "Null");
 
             // 5. Tentative de réponse structurée simple
             const simpleResp = await assistant.getAssistantResponse(textToSend);
@@ -199,7 +202,9 @@ const ChatBot = ({ navigation, currentUser }) => {
             }
 
             // 6. Appel Gemini AI
+            console.log("Calling runLibraryBot...");
             const botResp = await runLibraryBot(textToSend, messages, context);
+            console.log("runLibraryBot returned.");
 
             const botMsg = {
                 id: `bot-${Date.now()}`,
@@ -257,7 +262,7 @@ const ChatBot = ({ navigation, currentUser }) => {
                     onPress={() => navigation.goBack()}
                     style={styles.backButton}
                 >
-                    <Ionicons name="arrow-back" size={24} color="#FF8A50" />
+                    <Ionicons name="arrow-back" size={24} color={theme.colors.primary} />
                 </TouchableOpacity>
 
                 <View style={styles.headerInfo}>
@@ -351,7 +356,7 @@ const ChatBot = ({ navigation, currentUser }) => {
                             <ActivityIndicator size="small" color="#fff" />
                         ) : (
                             <LinearGradient
-                                colors={inputText.trim() ? ['#FF8A50', '#FF6B35'] : ['#ccc', '#aaa']}
+                                colors={inputText.trim() ? [theme.colors.primary, theme.colors.primaryLight] : ['#ccc', '#aaa']}
                                 style={styles.sendButtonGradient}
                             >
                                 <Ionicons name="send" size={20} color="#fff" />

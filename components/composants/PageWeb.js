@@ -2,11 +2,13 @@ import { View, Text, SafeAreaView, Image, TouchableOpacity, StyleSheet, Dimensio
 import React, { useState, useEffect } from 'react'
 import WebView from 'react-native-webview'
 import { Ionicons } from '@expo/vector-icons';
+import { useConfig } from '../context/ConfigContext';
 
 const WIDTH = Dimensions.get('window').width;
 const HEIGHT = Dimensions.get('window').height;
 
 const PageWeb = (props) => {
+    const { theme } = useConfig();
     const { chemin } = props.route.params;
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -36,17 +38,17 @@ const PageWeb = (props) => {
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.mainContainer}>
-                <View style={styles.tabBarContainer}>
+                <View style={[styles.tabBarContainer, { backgroundColor: theme.colors.primary }]}>
                     <TouchableOpacity onPress={() => props.navigation.goBack()}>
-                        <Ionicons name="arrow-back" size={24} color="black" />
+                        <Ionicons name="arrow-back" size={24} color="#fff" />
                     </TouchableOpacity>
                 </View>
 
                 {error ? (
                     <View style={styles.errorContainer}>
                         <Text style={styles.errorText}>{error}</Text>
-                        <TouchableOpacity 
-                            style={styles.retryButton}
+                        <TouchableOpacity
+                            style={[styles.retryButton, { backgroundColor: theme.colors.primary }]}
                             onPress={() => {
                                 setError(null);
                                 setIsLoading(true);
@@ -72,7 +74,7 @@ const PageWeb = (props) => {
 
                 {isLoading && !error && (
                     <View style={styles.loadingContainer}>
-                        <ActivityIndicator size="large" color="#0000ff" />
+                        <ActivityIndicator size="large" color={theme.colors.primary} />
                     </View>
                 )}
             </View>

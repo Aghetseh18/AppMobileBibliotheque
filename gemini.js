@@ -11,13 +11,17 @@ const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
 
 const model = genAI.getGenerativeModel({
     model: "gemini-2.5-flash",
+    generationConfig: {
+        maxOutputTokens: 500,
+        temperature: 0.7,
+    }
 });
 
 const generationConfig = {
     temperature: 0.7,
     topP: 0.8,
     topK: 40,
-    maxOutputTokens: 512, // Réponses plus courtes
+    maxOutputTokens: 2000,
 };
 
 // Votre fonction existante - GARDEZ-LA
@@ -29,7 +33,9 @@ async function run(prompt) {
         });
         const result = await chatSession.sendMessage(prompt);
         const response = await result.response;
-        return response.text();
+        console.log("Gemini Response Metadata:", JSON.stringify(response, null, 2));
+        const text = response.text();
+        return text;
     } catch (error) {
         console.error("Error in Gemini API call:", error);
         throw error;
@@ -120,8 +126,19 @@ Question de l'étudiant : "${userQuestion}"`;
             history: processedHistory.slice(-10),
         });
 
+        console.log("Sending message to Gemini...");
         const result = await chatSession.sendMessage(systemPrompt);
-        return result.response.text();
+        console.log("Got result from Gemini");
+        const response = result.response;
+        console.log("Gemini Response Metadata:", JSON.stringify({
+            finishReason: response.candidates?.[0]?.finishReason,
+            usageMetadata: response.usageMetadata,
+            safetyRatings: response.candidates?.[0]?.safetyRatings
+        }, null, 2));
+
+        const text = response.text();
+        console.log("Gemini Text:", text);
+        return text;
     } catch (error) {
         console.error('Erreur dans runLibraryBot:', error);
         return "Je rencontre une petite difficulté technique. N'hésitez pas à contacter directement la bibliothécaire.";

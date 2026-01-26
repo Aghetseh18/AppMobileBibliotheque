@@ -12,6 +12,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTranslation } from '../hooks/useTranslation';
 import { configService } from '../services/configService';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useConfig } from '../context/ConfigContext';
 
 
 const WIDTH = Dimensions.get('screen').width
@@ -19,6 +20,7 @@ const HEIGHT = Dimensions.get('screen').height
 
 export default function Parametre() {
   const navigation = useNavigation()
+  const { theme } = useConfig();
   const { currentUserNewNav } = useContext(UserContext)
   const { t } = useTranslation();
   const [datUserParams, setDatUserParams] = useState('')
@@ -70,7 +72,7 @@ export default function Parametre() {
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaType.Images,
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
         aspect: [1, 1],
         quality: 0.5,
@@ -279,7 +281,7 @@ export default function Parametre() {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#FF8A50" />
+        <ActivityIndicator size="large" color={theme.colors.primary} />
       </View>
     );
   }
@@ -324,7 +326,7 @@ export default function Parametre() {
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
-          <Ionicons name="arrow-back" size={24} color="#FF8A50" />
+          <Ionicons name="arrow-back" size={24} color={theme.colors.primary} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, isDarkMode && styles.darkText]}>{t('settings')}</Text>
         <View style={{ width: 24 }} />
@@ -342,7 +344,8 @@ export default function Parametre() {
             ) : (
               <Image style={styles.profileImageRefined} source={require('../../assets/userIc2.png')} />
             )}
-            <View style={styles.cameraBadge}>
+            {/* Camera Badge */}
+            <View style={[styles.cameraBadge, { backgroundColor: theme.colors.primary }]}>
               <Ionicons name="camera" size={14} color="#fff" />
             </View>
           </TouchableOpacity>
@@ -352,13 +355,13 @@ export default function Parametre() {
             </Text>
             <Text style={styles.profileEmailRefined}>{datUserParams?.email || t('no_email')}</Text>
             <View style={styles.deptBadge}>
-              <Text style={styles.deptBadgeText}>
+              <Text style={[styles.deptBadgeText, { color: theme.colors.primary }]}>
                 {datUserParams?.departement ? `${datUserParams.departement} • ${t('level')} ${datUserParams?.niveau || 'N/A'}` : t('no_dept')}
               </Text>
             </View>
           </View>
           <TouchableOpacity onPress={goToEditProfile} style={styles.editIconBtn}>
-            <MaterialIcons name="edit" size={20} color="#FF8A50" />
+            <MaterialIcons name="edit" size={20} color={theme.colors.primary} />
           </TouchableOpacity>
         </LinearGradient>
 
@@ -367,7 +370,7 @@ export default function Parametre() {
           <Text style={[styles.sectionTitle, isDarkMode && styles.darkText]}>{t('account')}</Text>
 
           {renderSettingItem({
-            icon: <MaterialIcons name="person-outline" size={20} color="#FF8A50" />,
+            icon: <MaterialIcons name="person-outline" size={20} color={theme.colors.primary} />,
             iconColor: "#FF8A50",
             title: t('personal_info'),
             action: goToEditProfile
@@ -523,7 +526,7 @@ export default function Parametre() {
                 {/* Location Card */}
                 <View style={[styles.infoCard, isDarkMode && styles.darkInfoCard]}>
                   <View style={[styles.infoIconCircle, { backgroundColor: 'rgba(255, 138, 80, 0.1)' }]}>
-                    <MaterialIcons name="location-on" size={22} color="#FF8A50" />
+                    <MaterialIcons name="location-on" size={22} color={theme.colors.primary} />
                   </View>
                   <View style={styles.infoTextContainer}>
                     <Text style={styles.infoLabel}>{t('location')}</Text>
@@ -575,17 +578,69 @@ export default function Parametre() {
                   <View style={styles.infoTextContainer}>
                     <Text style={styles.infoLabel}>{t('opening_hours')}</Text>
                     <View style={styles.hoursGrid}>
-                      {getParsedHours() ? (
-                        Object.entries(getParsedHours()).map(([day, hours]) => (
-                          <View key={day} style={styles.hourRowRefined}>
-                            <Text style={[styles.hourDayLabel, isDarkMode && styles.darkMutedText]}>{day}</Text>
-                            <View style={styles.hourLine} />
-                            <Text style={[styles.hourValueText, isDarkMode && styles.darkText]}>{hours}</Text>
-                          </View>
-                        ))
-                      ) : (
-                        <Text style={[styles.infoValue, isDarkMode && styles.darkText]}>{t('hours_val')}</Text>
-                      )}
+                      {(() => {
+                        const parsedHours = getParsedHours();
+                        if (!parsedHours || typeof parsedHours !== 'object') {
+                          return <Text style={[styles.infoValue, isDarkMode && styles.darkText]}>{t('hours_val')}</Text>;
+                        }
+
+                        const daysOrder = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+                        // 0 = Sunday, 1 = Monday, ...
+                        const todayIndex = new Date().getDay();
+                        const todayKey = daysOrder[todayIndex];
+
+                        // Display Order: Monday -> Sunday
+                        const displayOrder = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+
+                        return displayOrder.map((dayKey) => {
+                          const configKey = Object.keys(parsedHours).find(k => k.toLowerCase() === dayKey);
+                          let hoursValue = configKey ? parsedHours[configKey] : t('closed');
+
+                          if (!hoursValue && hoursValue !== t('closed')) return null;
+
+                          // Sanitize: If the value looks like a JSON string or object, clean it up
+                          if (hoursValue && typeof hoursValue === 'string' && (hoursValue.includes('{') || hoursValue.includes('"'))) {
+                            try {
+                              // Try to clean up quotes and braces if it's just a dirty string
+                              hoursValue = hoursValue.replace(/[{"}]/g, '').replace(/"/g, '').replace(/,/g, ' - ');
+                            } catch (e) {
+                              // Fallback
+                            }
+                          } else if (typeof hoursValue === 'object') {
+                            // Handle case where it might be an object {open:..., close:...}
+                            if (hoursValue.open && hoursValue.close) {
+                              hoursValue = `${hoursValue.open} - ${hoursValue.close}`;
+                            } else if (hoursValue.start && hoursValue.end) {
+                              hoursValue = `${hoursValue.start} - ${hoursValue.end}`;
+                            } else {
+                              hoursValue = JSON.stringify(hoursValue).replace(/[{"}]/g, '').replace(/"/g, '').replace(/,/g, ' ');
+                            }
+                          }
+
+                          const isToday = dayKey === todayKey;
+
+                          return (
+                            <View key={dayKey} style={[styles.hourRowRefined, isToday && styles.hourRowActive]}>
+                              <Text style={[
+                                styles.hourDayLabel,
+                                isDarkMode && styles.darkMutedText,
+                                isToday && styles.activeDayText
+                              ]}>
+                                {t(dayKey)}
+                                {isToday && <Text style={styles.todayIndicator}> • {t('today')}</Text>}
+                              </Text>
+
+                              <Text style={[
+                                styles.hourValueText,
+                                isDarkMode && styles.darkText,
+                                isToday && styles.activeDayText
+                              ]}>
+                                {hoursValue === 'Closed' ? t('closed') : hoursValue}
+                              </Text>
+                            </View>
+                          );
+                        });
+                      })()}
                     </View>
                   </View>
                 </View>
@@ -778,6 +833,7 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '800',
     paddingHorizontal: 0,
+    textTransform: 'uppercase',
   },
   logoutButton: {
     flexDirection: 'row',
@@ -886,7 +942,7 @@ const styles = StyleSheet.create({
   },
   versionBadgeText: {
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: '800',
     color: '#FF8A50',
   },
   aboutContentContainer: {
@@ -953,29 +1009,38 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   hoursGrid: {
-    marginTop: 10,
+    marginTop: 12,
+    gap: 6,
   },
   hourRowRefined: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    justifyContent: 'space-between',
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 12,
+  },
+  hourRowActive: {
+    backgroundColor: 'rgba(255, 138, 80, 0.1)',
   },
   hourDayLabel: {
     fontSize: 14,
-    fontWeight: '700',
-    color: '#666',
-    width: 85,
+    fontWeight: '600',
+    color: '#8E8E93',
   },
-  hourLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: 'rgba(0,0,0,0.08)',
-    marginHorizontal: 12,
+  activeDayText: {
+    color: '#FF8A50',
+    fontWeight: '700',
   },
   hourValueText: {
     fontSize: 14,
     fontWeight: '600',
     color: '#333',
+  },
+  todayIndicator: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#FF8A50',
   },
   modalCloseButton: {
     backgroundColor: '#FF8A50',
