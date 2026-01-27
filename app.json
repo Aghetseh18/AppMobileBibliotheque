@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "BiblioENSPY",
-    "slug": "biblioenspy-app",
+    "slug": "ingy-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/ensp.png",
@@ -41,6 +41,7 @@
       "expo-font",
       "expo-asset"
     ],
-    "newArchEnabled": true
+    "newArchEnabled": true,
+    "owner": "aghetseh"
   }
 }
