@@ -156,6 +156,36 @@ const ChatBot = ({ navigation, currentUser }) => {
         }
     };
 
+    // Helper to format fallback response
+    const formatFallbackResponse = (context) => {
+        let response = "⚠️ **Note :** Le service de génération de réponse est momentanément indisponible, mais voici ce que j'ai trouvé dans la base de données :\n\n";
+
+        if (context.booksFound && context.booksFound.length > 0) {
+            response += "**📚 Livres trouvés :**\n";
+            context.booksFound.forEach(book => {
+                const status = book.available ? "✅ Disponible" : "🔴 Indisponible";
+                response += `- **${book.title}** (${book.author})\n  Statut : ${status}\n  Emplacement : ${book.category}\n\n`;
+            });
+        }
+
+        if (context.thesisFound && context.thesisFound.length > 0) {
+            response += "**🎓 Mémoires/Thèses trouvés :**\n";
+            context.thesisFound.forEach(thesis => {
+                response += `- **${thesis.title}**\n  Auteur : ${thesis.author}\n  Département : ${thesis.category}\n\n`;
+            });
+        }
+
+        if (context.libraryInfo && context.matchFound && (!context.booksFound?.length && !context.thesisFound?.length)) {
+            // Fallback for general library info if matched but no specific docs
+            // This part is trickier without NLP, but we can dump key info
+            response += "**ℹ️ Informations générales :**\n";
+            response += `Horaires : ${JSON.stringify(context.libraryInfo.OpeningHours)}\n`;
+            // We can improve this if needed, but usually books/thesis are the main query targets
+        }
+
+        return response;
+    };
+
     // Gestion de l'envoi de message
     const handleSendMessage = async () => {
         const textToSend = inputText.trim();
@@ -179,10 +209,12 @@ const ChatBot = ({ navigation, currentUser }) => {
         setIsLoading(true);
         setIsTyping(true);
 
+        let context = null; // Defined outside try-catch
+
         try {
             // 4. Récupération du contexte RAG (Firestore)
             console.log("Calling assistant.queryKnowledgeBase...");
-            const context = await assistant.queryKnowledgeBase(textToSend, orgSettings);
+            context = await assistant.queryKnowledgeBase(textToSend, orgSettings);
             console.log("Context retrieved:", context ? "Found" : "Null");
 
             // 5. Tentative de réponse structurée simple
@@ -218,12 +250,20 @@ const ChatBot = ({ navigation, currentUser }) => {
 
         } catch (error) {
             console.error('[ChatBot] Error in flow:', error);
+
+            let fallbackText = "Désolé, une erreur technique est survenue. Réessayez plus tard.";
+
+            // Check if we have context data to display as fallback
+            if (context && (context.matchFound || context.booksFound?.length > 0 || context.thesisFound?.length > 0)) {
+                fallbackText = formatFallbackResponse(context);
+            }
+
             const errorMsg = {
                 id: `err-${Date.now()}`,
-                text: "Désolé, une erreur technique est survenue. Réessayez plus tard.",
+                text: fallbackText,
                 isBot: true,
                 timestamp: new Date(),
-                type: 'error'
+                type: context && context.matchFound ? 'bot' : 'error' // Treat as bot message if we have content
             };
             setMessages(prev => [...prev, errorMsg]);
         } finally {

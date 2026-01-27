@@ -347,7 +347,10 @@ const VueUn = (props) => {
           pdfUrl: item.pdfUrl || item.url || null,
           collection: item.collection || (item.pdfUrl ? 'BiblioThesis' : 'BiblioBooks'), // Heuristic
         }));
-        setPopularBooks(mappedPopular);
+
+        if (mappedPopular.length > 0) {
+          setPopularBooks(mappedPopular);
+        }
 
         // 2. Personalized (if user logged in)
         if (currentUserNewNav?.email) {
@@ -363,7 +366,10 @@ const VueUn = (props) => {
             pdfUrl: item.pdfUrl || item.url || null,
             collection: item.collection || (item.pdfUrl ? 'BiblioThesis' : 'BiblioBooks'),
           }));
-          setUserRecommendations(mappedPersonal);
+
+          if (mappedPersonal.length > 0) {
+            setUserRecommendations(mappedPersonal);
+          }
         }
       } catch (error) {
         console.error("Error loading recommendations:", error);
