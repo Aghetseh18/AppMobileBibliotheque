@@ -12,6 +12,7 @@ import { auth, storage, db } from '../../config';
 import { UserContext } from '../context/UserContext';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
+import useOrgLogo from '../hooks/useOrgLogo';
 
 
 const WIDTH = Dimensions.get('window').width;
@@ -29,6 +30,7 @@ const levels = [
 
 const SignUpForm = ({ navigation }) => {
     const { emailHigh, setEmailHigh } = useContext(UserContext);
+    const { logoUrl } = useOrgLogo();
     const [selectedLevel, setSelectedLevel] = useState(''); // modified this for debugging purposes
     const [selectedDepartment, setSelectedDepartment] = useState('');
     const [image, setImage] = useState(null);
@@ -295,7 +297,7 @@ const SignUpForm = ({ navigation }) => {
             <View style={styles.container}>
                 <View style={styles.header}>
                     <Image
-                        source={require('../../assets/ensp.png')}
+                        source={logoUrl ? { uri: logoUrl } : require('../../assets/ensp.png')}
                         style={styles.logo}
                         resizeMode="contain"
                     />

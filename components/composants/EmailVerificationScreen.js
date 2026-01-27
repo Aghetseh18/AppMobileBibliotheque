@@ -14,6 +14,7 @@ import { auth } from '../../config';
 import { UserContext } from '../context/UserContext';
 import { Ionicons } from '@expo/vector-icons';
 import { sendEmailVerification, signOut } from 'firebase/auth';
+import useOrgLogo from '../hooks/useOrgLogo';
 
 const WIDTH = Dimensions.get('window').width;
 const HEIGHT = Dimensions.get('window').height;
@@ -21,6 +22,7 @@ const HEIGHT = Dimensions.get('window').height;
 const EmailVerificationScreen = ({ navigation, route }) => {
   const { email } = route.params;
   const { setEmailHigh } = useContext(UserContext);
+  const { logoUrl } = useOrgLogo();
   const [isLoading, setIsLoading] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
   const [timeLeft, setTimeLeft] = useState(60);
@@ -224,7 +226,7 @@ const EmailVerificationScreen = ({ navigation, route }) => {
       <View style={styles.container}>
         <View style={styles.header}>
           <Image
-            source={require('../../assets/ensp.png')}
+            source={logoUrl ? { uri: logoUrl } : require('../../assets/ensp.png')}
             style={styles.logo}
             resizeMode="contain"
           />
