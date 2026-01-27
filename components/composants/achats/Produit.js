@@ -3,7 +3,8 @@ import Swiper from 'react-native-swiper';
 import React, { useContext, useEffect, useState } from 'react';
 import { UserContextNavApp } from '../../navigation/NavApp';
 import { API_URL } from '../../../apiConfig';
-import { collection, doc, updateDoc, arrayUnion, arrayRemove, serverTimestamp, Timestamp, onSnapshot, getDoc, query, getDocs, increment, writeBatch, setDoc, limit } from "firebase/firestore";
+import { collection, doc, updateDoc, arrayUnion, arrayRemove, serverTimestamp, Timestamp, onSnapshot, getDoc, query, getDocs, increment, writeBatch, setDoc, limit, where } from "firebase/firestore";
+import { RecommendationService } from '../../services/RecommendationService';
 import { useFirebase } from '../../context/FirebaseContext';
 import BigRect from '../BigRect';
 import PubCar from '../PubCar';
@@ -225,9 +226,15 @@ const Produit = ({ route, navigation }) => {
           }
         }
 
-        if (bookData && bookData.commentaire && Array.isArray(bookData.commentaire)) {
-          setComment(bookData.commentaire);
+        if (bookData) {
+          setCurrentExemplaire(bookData.exemplaire || 0); // Update availability from DB
+          if (bookData.commentaire && Array.isArray(bookData.commentaire)) {
+            setComment(bookData.commentaire);
+          } else {
+            setComment([]);
+          }
         } else {
+          setCurrentExemplaire(0);
           setComment([]);
         }
       } catch (error) {
@@ -382,61 +389,36 @@ const Produit = ({ route, navigation }) => {
     }
   };
 
-  const calculateSimilarity = (str1, str2) => {
-    if (!str1 || !str2) return 0;
-    const s1 = normalizeString(str1).split(' ').filter(Boolean);
-    const s2 = normalizeString(str2).split(' ').filter(Boolean);
-    if (s1.length === 0 || s2.length === 0) return 0;
-    const commonWords = s1.filter(word => s2.includes(word));
-    return commonWords.length / Math.max(s1.length, s2.length);
-  };
-
   const fetchSimilarBooks = async () => {
-    if (!name || !isFirebaseReady || !db) return;
+    if (!name) return;
     setLoadingSimilar(true);
 
     try {
-      const collections = ['BiblioGE', 'BiblioGI', 'BiblioGM', 'BiblioGT', 'BiblioInformatique'];
-      let allBooks = [];
+      console.log(`[Produit] Fetching similar from API for: ${name}`);
+      const data = await RecommendationService.getSimilarDocuments(name);
 
-      for (const collectionName of collections) {
-        try {
-          const booksRef = collection(db, collectionName);
-          const q = query(booksRef);
-          const querySnapshot = await getDocs(q);
+      const recommendations = (data.similar_documents || [])
+        .map(doc => ({
+          id: doc.id || Math.random().toString(), // API might not return ID matching firestore
+          title: doc.titre || doc.title || doc.name, // Handle various naming conventions
+          category: doc.cathegorie || doc.category || 'Non catégorisé',
+          image: doc.image || null,
+          description: doc.desc || doc.description || '',
+          exemplaire: doc.exemplaire || 0, // Ensure these fields exist in API output or fallback
+          collection: doc.collection || 'BiblioBooks',
+          pdfUrl: doc.pdfUrl || doc.url || null
+        }))
+        // CHANGE: Filter out theses. Keep only if NO pdfUrl and collection is NOT BiblioThesis
+        .filter(doc => {
+          const isThesis = !!doc.pdfUrl ||
+            doc.collection === 'BiblioThesis' ||
+            (doc.category && doc.category.toLowerCase().includes('memoire'));
+          return !isThesis;
+        });
 
-          querySnapshot.forEach((doc) => {
-            const bookData = doc.data();
-            if (bookData && bookData.name && bookData.name !== name) {
-              allBooks.push({
-                id: doc.id,
-                title: bookData.name || '',
-                category: bookData.cathegorie || 'Non catégorisé',
-                image: bookData.image || null,
-                description: bookData.desc || '',
-                exemplaire: bookData.exemplaire || 0,
-                collection: collectionName
-              });
-            }
-          });
-        } catch (error) {
-          console.error(`Erreur lecture ${collectionName}:`, error);
-        }
-      }
-
-      const scoredBooks = allBooks.map(book => ({
-        ...book,
-        score: calculateSimilarity(name, book.title) * 0.6 + (book.category === cathegorie ? 0.4 : 0)
-      }));
-
-      const recommendations = scoredBooks
-        .sort((a, b) => b.score - a.score)
-        .filter(book => book.score > 0.1)
-        .slice(0, 5);
-
-      setSimilarBooks(recommendations);
+      setSimilarBooks(recommendations.slice(0, 5));
     } catch (error) {
-      console.error('Erreur recherche livres similaires:', error);
+      console.error('Erreur recherche livres similaires (API):', error);
       setSimilarBooks([]);
     } finally {
       setLoadingSimilar(false);
@@ -695,7 +677,7 @@ const Produit = ({ route, navigation }) => {
 
       <Modal animationType="slide" transparent={true} visible={modalComm} onRequestClose={() => setModalComm(false)}>
         <KeyboardAvoidingView
-          behavior="padding"
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           keyboardVerticalOffset={Platform.OS === 'ios' ? 16 : 0}
           style={{ flex: 1 }}
         >

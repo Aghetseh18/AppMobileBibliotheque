@@ -1,8 +1,8 @@
 import { useNavigation } from '@react-navigation/native';
-import { arrayUnion, doc, updateDoc,onSnapshot} from 'firebase/firestore';
-import React, { useContext, useState,useEffect } from 'react';
+import { arrayUnion, doc, updateDoc, setDoc, onSnapshot } from 'firebase/firestore';
+import React, { useContext, useState, useEffect } from 'react';
 import { ImageBackground, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { db } from '../../config'; 
+import { db } from '../../config';
 import { UserContextNavApp } from '../navigation/NavApp';
 
 // Fonction pour normaliser les chaînes (supprimer les accents)
@@ -14,8 +14,8 @@ const normalizeString = (str) => {
     .trim();
 };
 
-const BigRect = ({ salle, desc, etagere, exemplaire, image, name, cathegorie, datUser, commentaire, nomBD, type }) => {
-  const navigation = useNavigation();  
+const BigRect = ({ salle, desc, etagere, exemplaire, image, name, cathegorie, datUser, commentaire, nomBD, type, pdfUrl, annee, superviseur, matricule, keywords, theme }) => {
+  const navigation = useNavigation();
   const { currentUserdata } = useContext(UserContextNavApp);
 
   const [modalVisible, setModalVisible] = useState(false);
@@ -24,35 +24,52 @@ const BigRect = ({ salle, desc, etagere, exemplaire, image, name, cathegorie, da
   const voirProduit = () => {
     // S'assurer que name est défini avant de le normaliser
     const normalizedName = name ? normalizeString(name) : '';
-    console.log('Navigation vers Produit:', {
+    console.log('Navigation:', {
+      type: type,
       name: name,
-      normalized: normalizedName,
       cathegorie: cathegorie
     });
 
-    navigation.navigate('Produit', {
-      salle,
-      desc,
-      etagere,
-      exemplaire,
-      image,
-      name,
-      normalizedName,
-      cathegorie,
-      datUser,
-      commentaire,
-      nomBD,
-      type,
-    });
+    if (type === 'memoire' || (type === undefined && cathegorie && cathegorie.toLowerCase().includes('memoire'))) {
+      navigation.navigate('MemoireDetails', {
+        name,
+        cathegorie,
+        image,
+        desc,
+        nomBD,
+        pdfUrl,
+        annee,
+        superviseur,
+        matricule,
+        keywords,
+        theme,
+        commentaire
+      });
+    } else {
+      navigation.navigate('Produit', {
+        salle,
+        desc,
+        etagere,
+        exemplaire,
+        image,
+        name,
+        normalizedName,
+        cathegorie,
+        datUser,
+        commentaire,
+        nomBD,
+        type,
+      });
+    }
   };
 
   const ajouter = async () => {
     try {
       if (currentUserdata?.email) {
         const userRef = doc(db, 'BiblioUser', currentUserdata.email);
-        await updateDoc(userRef, {
+        await setDoc(userRef, {
           docRecentRegarder: arrayUnion({ cathegorieDoc: cathegorie, type }),
-        });
+        }, { merge: true });
       }
       voirProduit();
     } catch (error) {
@@ -99,17 +116,17 @@ const BigRect = ({ salle, desc, etagere, exemplaire, image, name, cathegorie, da
       <TouchableOpacity onPress={ajouter} style={styles.bookCard}>
         <View style={styles.imageWrapper}>
           <ImageBackground
-              style={styles.container}
-              source={{ uri: image }}
-              resizeMode="cover"
-              imageStyle={styles.image}
+            style={styles.container}
+            source={{ uri: image }}
+            resizeMode="cover"
+            imageStyle={styles.image}
           />
           {currentExemplaire < 3 && (
-              <View style={styles.badgeContainer}>
-                <Text style={styles.badgeText}>
-                  {currentExemplaire === 0 ? 'Indisponible' : 'Stock limité'}
-                </Text>
-              </View>
+            <View style={styles.badgeContainer}>
+              <Text style={styles.badgeText}>
+                {currentExemplaire === 0 ? 'Indisponible' : 'Stock limité'}
+              </Text>
+            </View>
           )}
         </View>
         <View style={styles.infoContainer}>
@@ -124,7 +141,7 @@ const BigRect = ({ salle, desc, etagere, exemplaire, image, name, cathegorie, da
           </View>
         </View>
       </TouchableOpacity>
-      
+
       <Modal
         animationType='slide'
         transparent={true}

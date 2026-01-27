@@ -372,7 +372,7 @@ const EnhancedEmail = ({ navigation }) => {
         </Animated.View>
 
         <KeyboardAvoidingView
-          behavior="padding"
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={styles.keyboardAvoidingView}
           keyboardVerticalOffset={Platform.OS === "ios" ? 16 : 0}
         >

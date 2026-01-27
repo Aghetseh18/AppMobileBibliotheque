@@ -15,6 +15,7 @@ import PageWeb from '../composants/PageWeb'
 import ModalWeb from '../composants/ModalWeb'
 import Email from '../composants/message/EnhancedEmail'
 import ChatBot from '../composants/chatBot/ChatBot'
+import MemoireDetails from '../elearning/MemoireDetails'
 
 import ScreenVueUn from '../vues/ScreenVueUn'
 import Notifications from '../vues/Notifications'
@@ -55,6 +56,7 @@ const NavShop = () => {
                <Stack.Screen name='Cercle' component={Cercle} />
                <Stack.Screen name='Cathegorie' component={Cathegorie} />
                <Stack.Screen name='SmallRect' component={SmallRect} />
+               <Stack.Screen name='MemoireDetails' component={MemoireDetails} />
                <Stack.Screen name='PageWeb' component={PageWeb} />
                <Stack.Screen name='ModalWeb' component={ModalWeb} />
                <Stack.Screen name='Notifications' component={Notifications} />

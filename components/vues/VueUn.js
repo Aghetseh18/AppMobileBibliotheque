@@ -38,6 +38,7 @@ import Cercle from '../composants/Cercle';
 import SmallRect from '../composants/SmallRect';
 import { UserContext } from '../context/UserContext';
 import { API_URL } from '../../apiConfig';
+import { RecommendationService } from '../services/RecommendationService';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { MaterialCommunityIcons, Ionicons } from "@expo/vector-icons";
@@ -327,6 +328,54 @@ const VueUn = (props) => {
       if (unsubscribeDepartements) unsubscribeDepartements();
     };
   }, [currentUserNewNav?.email]);
+
+  useEffect(() => {
+    const loadRecommendations = async () => {
+      setLoadingRecommendations(true);
+      try {
+        // 1. Popular Docs
+        const popular = await RecommendationService.getPopularDocuments();
+        // Map API response to UI format if needed
+        const mappedPopular = (popular || []).map(item => ({
+          ...item,
+          id: item.id || Math.random().toString(),
+          title: item.title || item.name || 'Untitled',
+          category: item.category || item.cathegorie || 'Général',
+          image: item.image || null,
+          description: item.description || item.desc || '',
+          exemplaire: item.exemplaire || 0,
+          pdfUrl: item.pdfUrl || item.url || null,
+          collection: item.collection || (item.pdfUrl ? 'BiblioThesis' : 'BiblioBooks'), // Heuristic
+        }));
+        setPopularBooks(mappedPopular);
+
+        // 2. Personalized (if user logged in)
+        if (currentUserNewNav?.email) {
+          const personal = await RecommendationService.getPersonalizedRecommendations(currentUserNewNav.email);
+          const mappedPersonal = (personal.recommendations || []).map(item => ({
+            ...item,
+            id: item.id || Math.random().toString(),
+            title: item.title || item.name || 'Untitled',
+            category: item.category || item.cathegorie || 'Général',
+            image: item.image || null,
+            description: item.description || item.desc || '',
+            exemplaire: item.exemplaire || 0,
+            pdfUrl: item.pdfUrl || item.url || null,
+            collection: item.collection || (item.pdfUrl ? 'BiblioThesis' : 'BiblioBooks'),
+          }));
+          setUserRecommendations(mappedPersonal);
+        }
+      } catch (error) {
+        console.error("Error loading recommendations:", error);
+      } finally {
+        setLoadingRecommendations(false);
+      }
+    };
+
+    if (datUser?.email || currentUserNewNav?.email) {
+      loadRecommendations();
+    }
+  }, [currentUserNewNav?.email, datUser?.email]);
 
   const handleMemoireClick = (categorieMemoire) => {
     const memoiresFiltres = memoireData.filter(memoire =>

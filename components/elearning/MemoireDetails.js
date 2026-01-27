@@ -5,6 +5,7 @@ import { UserContextNavApp } from '../navigation/NavApp';
 import { useTranslation } from '../hooks/useTranslation';
 import { doc, updateDoc, arrayUnion, Timestamp, getDoc, collection, query, getDocs } from "firebase/firestore";
 import { useFirebase } from '../context/FirebaseContext';
+import { RecommendationService } from '../services/RecommendationService';
 import { Ionicons } from '@expo/vector-icons';
 
 const WIDTH = Dimensions.get('window').width;
@@ -89,51 +90,41 @@ const MemoireDetails = ({ route, navigation }) => {
     };
 
     const fetchSimilarMemoires = async () => {
-        if (!name || !isFirebaseReady || !db) return;
+        if (!name) return;
         setLoadingSimilar(true);
 
         try {
-            const q = query(collection(db, 'BiblioThesis'));
-            const querySnapshot = await getDocs(q);
-            let allMemoires = [];
+            console.log(`[MemoireDetails] 获取 similar memoires API for: ${name}`);
+            const data = await RecommendationService.getSimilarDocuments(name);
 
-            querySnapshot.forEach((doc) => {
-                const data = doc.data();
-                // Avoid including the current memoire
-                if (data && (data.name || data.theme) && doc.id !== nomBD && data.name !== name) {
-                    allMemoires.push({
-                        id: doc.id,
-                        title: data.name || data.theme || 'Sans titre',
-                        category: data.departement || data.cathegorie || 'Non classé',
-                        image: data.image || null,
-                        desc: data.desc || data.description || '',
-                        originalId: doc.id,
-                        // Pass other fields needed for navigation
-                        annee: data.annee,
-                        superviseur: data.superviseur,
-                        keywords: data.keywords,
-                        pdfUrl: data.pdfUrl,
-                        matricule: data.matricule,
-                        theme: data.theme,
-                        createdAt: data.createdAt
-                    });
-                }
-            });
-
-            // Calculate score based on name similarity and matching category/department
-            const scoredMemoires = allMemoires.map(m => ({
-                ...m,
-                score: calculateSimilarity(name, m.title) * 0.6 + (normalizeString(m.category) === normalizeString(cathegorie) ? 0.4 : 0)
+            // Map API response
+            const recommendations = (data.similar_documents || []).map(doc => ({
+                id: doc.id || Math.random().toString(),
+                title: doc.titre || doc.title || doc.name,
+                category: doc.cathegorie || doc.category || 'Non classé',
+                image: doc.image || null,
+                desc: doc.desc || doc.description || '',
+                originalId: doc.id,
+                // Fields specific to memoires might need to be passed or approximated
+                annee: doc.annee,
+                superviseur: doc.superviseur,
+                keywords: doc.keywords,
+                pdfUrl: doc.pdfUrl,
+                matricule: doc.matricule,
+                theme: doc.theme,
+                createdAt: doc.createdAt
             }));
 
-            const recommendations = scoredMemoires
-                .sort((a, b) => b.score - a.score)
-                .slice(0, 5);
-
-            setSimilarMemoires(recommendations);
+            setSimilarMemoires(recommendations.filter(doc => {
+                // Keep only if explicit thesis collection OR has pdfUrl OR category implies thesis
+                return doc.pdfUrl ||
+                    doc.collection === 'BiblioThesis' ||
+                    (doc.category && doc.category.toLowerCase().includes('memoire'));
+            }).slice(0, 5));
 
         } catch (error) {
-            console.error("Erreur chargement mémoires similaires:", error);
+            console.error("Erreur chargement mémoires similaires (API):", error);
+            setSimilarMemoires([]);
         } finally {
             setLoadingSimilar(false);
         }
