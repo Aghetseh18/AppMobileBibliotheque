@@ -4,10 +4,9 @@ import {
     HarmCategory,
     HarmBlockThreshold,
 } from "@google/generative-ai";
-
 import { GEMINI_API_KEY } from "@env";
 
-console.log("DEBUG: GEMINI_API_KEY loaded:", GEMINI_API_KEY ? GEMINI_API_KEY.substring(0, 10) + "..." : "UNDEFINED");
+console.log("DEBUG: GEMINI_API_KEY loaded:", GEMINI_API_KEY);
 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
 
 const model = genAI.getGenerativeModel({
