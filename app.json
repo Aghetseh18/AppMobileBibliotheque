@@ -36,6 +36,11 @@
       "expo-font",
       "expo-asset"
     ],
+    "expo": {
+      "cli": {
+        "appVersionSource": "remote"
+      }
+    },
     "newArchEnabled": true,
     "owner": "aghetseh"
   }
