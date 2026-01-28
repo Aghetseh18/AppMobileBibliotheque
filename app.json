@@ -42,6 +42,11 @@
       }
     },
     "newArchEnabled": true,
-    "owner": "aghetseh"
+    "owner": "aghetseh",
+    "extra": {
+      "eas": {
+        "projectId": "a3673684-51ab-4809-a42d-dd38395ed87c"
+      }
+    }
   }
 }
