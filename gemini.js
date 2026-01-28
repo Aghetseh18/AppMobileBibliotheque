@@ -7,6 +7,7 @@ import {
 
 import { GEMINI_API_KEY } from "@env";
 
+console.log("DEBUG: GEMINI_API_KEY loaded:", GEMINI_API_KEY ? GEMINI_API_KEY.substring(0, 10) + "..." : "UNDEFINED");
 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
 
 const model = genAI.getGenerativeModel({
@@ -141,7 +142,7 @@ Question de l'étudiant : "${userQuestion}"`;
         return text;
     } catch (error) {
         console.error('Erreur dans runLibraryBot:', error);
-        return "Je rencontre une petite difficulté technique. N'hésitez pas à contacter directement la bibliothécaire.";
+        throw error;
     }
 }
 
