@@ -20,7 +20,7 @@ const HEIGHT = Dimensions.get('screen').height
 
 export default function Parametre() {
   const navigation = useNavigation()
-  const { theme } = useConfig();
+  const { theme, orgSettings } = useConfig();
   const { currentUserNewNav } = useContext(UserContext)
   const { t } = useTranslation();
   const [datUserParams, setDatUserParams] = useState('')
@@ -30,11 +30,11 @@ export default function Parametre() {
   const [language, setLanguage] = useState('Français')
   const [empruntsCount, setEmpruntsCount] = useState(0);
   const [modalAboutVisible, setModalAboutVisible] = useState(false);
-  const [orgConfig, setOrgConfig] = useState(null);
+  // const [orgConfig, setOrgConfig] = useState(null); // Removed local state
 
   // Helper to parse OpeningHours which might be a JSON string
   const getParsedHours = () => {
-    const hours = orgConfig?.OpeningHours;
+    const hours = orgSettings?.OpeningHours;
     if (!hours) return null;
     if (typeof hours === 'string') {
       try {
@@ -46,19 +46,8 @@ export default function Parametre() {
     return hours;
   };
 
-  useEffect(() => {
-    const loadConfig = async () => {
-      try {
-        console.log('--- FETCHING LIVE CONFIG ---');
-        const org = await configService.getOrgSettings();
-        setOrgConfig(org);
-        console.log('LIVE CONFIG LOADED:', org);
-      } catch (error) {
-        console.error('Failed to fetch config:', error);
-      }
-    };
-    loadConfig();
-  }, []);
+  // Removed local loadConfig useEffect
+
   const unreadNotifications = useNotificationCount(currentUserNewNav?.email);
 
 
@@ -531,7 +520,7 @@ export default function Parametre() {
                   <View style={styles.infoTextContainer}>
                     <Text style={styles.infoLabel}>{t('location')}</Text>
                     <Text style={[styles.infoValue, isDarkMode && styles.darkText]}>
-                      {orgConfig?.Address || t('location_val')}
+                      {orgSettings?.Address || t('location_val')}
                     </Text>
                   </View>
                 </View>
@@ -544,10 +533,10 @@ export default function Parametre() {
                   <View style={styles.infoTextContainer}>
                     <Text style={styles.infoLabel}>{t('contact_details')}</Text>
                     <Text style={[styles.infoValue, isDarkMode && styles.darkText]}>
-                      {orgConfig?.Contact?.Phone || t('phone_val')}
+                      {orgSettings?.Contact?.Phone || t('phone_val')}
                     </Text>
                     <Text style={[styles.infoValue, isDarkMode && styles.darkText, styles.mt2]}>
-                      {orgConfig?.Contact?.Email || t('email_val')}
+                      {orgSettings?.Contact?.Email || t('email_val')}
                     </Text>
                   </View>
                 </View>
@@ -561,11 +550,11 @@ export default function Parametre() {
                     <Text style={styles.infoLabel}>{t('borrowing_rules')}</Text>
                     <View style={styles.rulePill}>
                       <Text style={styles.rulePillText}>
-                        {orgConfig?.MaximumSimultaneousLoans || 3} {t('tab_books').toLowerCase()} max
+                        {orgSettings?.MaximumSimultaneousLoans || 3} {t('tab_books').toLowerCase()} max
                       </Text>
                     </View>
                     <Text style={[styles.infoValue, isDarkMode && styles.darkText, styles.mt4]}>
-                      {t('late_fees')}: {orgConfig?.LateReturnPenalties?.[0] || '100 FCFA/jour'}
+                      {t('late_fees')}: {orgSettings?.LateReturnPenalties?.[0] || '100 FCFA/jour'}
                     </Text>
                   </View>
                 </View>

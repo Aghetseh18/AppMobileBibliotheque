@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, useMemo } from 'react';
 import { configService } from '../services/configService';
+import { doc, onSnapshot } from 'firebase/firestore';
+import { db } from '../../config';
 
 const DEFAULT_THEME = {
     primary: '#FF6600',
@@ -40,62 +42,43 @@ export const ConfigProvider = ({ children }) => {
         };
     }, [orgSettings]);
 
-    const fetchSettings = async () => {
-        try {
-            setIsLoading(true);
-            setError(null);
-
-            // Test de connexion Firebase d'abord
-            const isConnected = await configService.testFirebaseConnection();
-            if (!isConnected) {
-                // Warning only, continue to try fetching fallback
-                console.warn('Difficulté de connexion à Firebase détectée');
-            }
-
-            const [orgData, appData] = await Promise.all([
-                configService.getOrgSettings(),
-                configService.getAppSettings()
-            ]);
-
-            setOrgSettings(orgData);
-            setAppSettings(appData);
-
-            // Vérifier si les données viennent vraiment de Firebase
-            if (orgData.Name === 'BiblioENSPY' && !orgData.Logo) {
-                // setError('Utilisation des paramètres par défaut.');
-            }
-
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : 'Erreur inconnue';
-            setError(`Erreur de configuration: ${errorMessage}`);
-
-            // Charger les paramètres par défaut en cas d'erreur
-            try {
-                const [orgData, appData] = await Promise.all([
-                    configService.getOrgSettings(),
-                    configService.getAppSettings()
-                ]);
-                setOrgSettings(orgData);
-                setAppSettings(appData);
-            } catch (fallbackError) {
-                console.error('❌ Even fallback failed:', fallbackError);
-            }
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
     const testConnection = async () => {
         return await configService.testFirebaseConnection();
     };
 
-    const refetch = async () => {
-        configService.invalidateCache();
-        await fetchSettings();
-    };
-
     useEffect(() => {
-        fetchSettings();
+        setIsLoading(true);
+        setError(null);
+
+        const unsubscribeOrg = onSnapshot(doc(db, 'Configuration', 'OrgSettings'), (docSnapshot) => {
+            if (docSnapshot.exists()) {
+                console.log("OrgSettings updated:", docSnapshot.data());
+                setOrgSettings(docSnapshot.data());
+            } else {
+                console.warn("OrgSettings document does not exist");
+                setOrgSettings({});
+            }
+        }, (err) => {
+            console.error("Real-time OrgSettings error:", err);
+            setError(err.message);
+        });
+
+        const unsubscribeApp = onSnapshot(doc(db, 'Configuration', 'AppSettings'), (docSnapshot) => {
+            if (docSnapshot.exists()) {
+                setAppSettings(docSnapshot.data());
+            } else {
+                setAppSettings({});
+            }
+            setIsLoading(false); // Consider loaded once we have at least one response (or both ideally)
+        }, (err) => {
+            console.error("Real-time AppSettings error:", err);
+            // Don't necessarily block app if just this fails
+        });
+
+        return () => {
+            unsubscribeOrg();
+            unsubscribeApp();
+        };
     }, []);
 
     return (
@@ -105,7 +88,6 @@ export const ConfigProvider = ({ children }) => {
             theme,
             isLoading,
             error,
-            refetch,
             testConnection
         }}>
             {children}

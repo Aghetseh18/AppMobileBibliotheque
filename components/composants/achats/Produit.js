@@ -25,7 +25,11 @@ const normalizeString = (str) => {
     .trim();
 };
 
+import { useConfig } from '../../context/ConfigContext';
+
 const Produit = ({ route, navigation }) => {
+  const { theme } = useConfig();
+  const colors = theme.colors;
   const { t } = useTranslation();
   const { salle, desc, etagere, exemplaire, image, name, cathegorie, commentaire, nomBD, type: bookType } = route.params || {};
   const normalizedName = name ? normalizeString(name) : '';
@@ -463,9 +467,9 @@ const Produit = ({ route, navigation }) => {
           </View>
         </Swiper>
 
-        <View style={styles.bookDetailsContainer}>
+        <View style={[styles.bookDetailsContainer, { backgroundColor: colors.surface }]}>
           <View style={styles.titleContainer}>
-            <Text style={styles.bookTitle}>{TITRE}</Text>
+            <Text style={[styles.bookTitle, { color: colors.text.primary }]}>{TITRE}</Text>
             <View style={styles.exemplairesContainer}>
               <Text style={[
                 styles.exemplairesText,
@@ -480,8 +484,8 @@ const Produit = ({ route, navigation }) => {
           </View>
 
           <View style={styles.infoContainer}>
-            <Text style={styles.infoLabel}>Catégorie:</Text>
-            <Text style={styles.infoValue}>{cathegorie}</Text>
+            <Text style={[styles.infoLabel, { color: colors.text.secondary }]}>Catégorie:</Text>
+            <Text style={[styles.infoValue, { color: colors.text.primary }]}>{cathegorie}</Text>
           </View>
 
           <TouchableOpacity
@@ -498,44 +502,44 @@ const Produit = ({ route, navigation }) => {
           </TouchableOpacity>
         </View>
 
-        <View style={styles.descriptionContainer}>
+        <View style={[styles.descriptionContainer, { backgroundColor: colors.surface }]}>
           <View style={styles.descriptionHeader}>
-            <Text style={styles.descriptionTitle}>{t('description_title')}</Text>
+            <Text style={[styles.descriptionTitle, { color: colors.text.primary }]}>{t('description_title')}</Text>
             <TouchableOpacity onPress={() => setModalDescription(true)} style={styles.seeMoreButton}>
               <Text style={styles.seeMoreText}>{t('see_more')}</Text>
             </TouchableOpacity>
           </View>
-          <Text style={styles.descriptionText}>
+          <Text style={[styles.descriptionText, { color: colors.text.secondary }]}>
             {bookDescription ? (bookDescription.length > 150 ? `${bookDescription.slice(0, 150)}...` : bookDescription) : "Aucune description disponible"}
           </Text>
         </View>
 
-        <View style={styles.locationContainer}>
-          <Text style={styles.locationTitle}>Emplacement</Text>
+        <View style={[styles.locationContainer, { backgroundColor: colors.surface }]}>
+          <Text style={[styles.locationTitle, { color: colors.text.primary }]}>Emplacement</Text>
           <View style={styles.locationDetails}>
             <View style={styles.locationItem}>
-              <Text style={styles.locationLabel}>{t('room_label')}</Text>
-              <Text style={styles.locationValue}>{salle}</Text>
+              <Text style={[styles.locationLabel, { color: colors.text.secondary }]}>{t('room_label')}</Text>
+              <Text style={[styles.locationValue, { color: colors.text.primary }]}>{salle}</Text>
             </View>
             <View style={styles.locationDivider} />
             <View style={styles.locationItem}>
-              <Text style={styles.locationLabel}>{t('shelf_label')}</Text>
-              <Text style={styles.locationValue}>{etagere}</Text>
+              <Text style={[styles.locationLabel, { color: colors.text.secondary }]}>{t('shelf_label')}</Text>
+              <Text style={[styles.locationValue, { color: colors.text.primary }]}>{etagere}</Text>
             </View>
           </View>
         </View>
 
         <View style={styles.reviewsContainer}>
           <View style={styles.reviewsHeader}>
-            <Text style={styles.reviewsTitle}>{t('reviews_title')}</Text>
-            <TouchableOpacity style={styles.addReviewButton} onPress={() => setModalComm(true)}>
+            <Text style={[styles.reviewsTitle, { color: colors.text.primary }]}>{t('reviews_title')}</Text>
+            <TouchableOpacity style={[styles.addReviewButton, { backgroundColor: colors.primary }]} onPress={() => setModalComm(true)}>
               <Text style={styles.addReviewButtonText}>{t('give_review')}</Text>
             </TouchableOpacity>
           </View>
 
           <View style={styles.ratingSummary}>
             <View style={styles.averageRatingContainer}>
-              <Text style={styles.averageRating}>{calculateAverageRating()}</Text>
+              <Text style={[styles.averageRating, { color: colors.text.primary }]}>{calculateAverageRating()}</Text>
               <View style={styles.starsContainer}>
                 {[1, 2, 3, 4, 5].map((star) => (
                   <Text key={star} style={styles.starIcon}>
@@ -543,7 +547,7 @@ const Produit = ({ route, navigation }) => {
                   </Text>
                 ))}
               </View>
-              <Text style={styles.totalReviews}>{comment?.length || 0} {t('reviews_count')}</Text>
+              <Text style={[styles.totalReviews, { color: colors.text.secondary }]}>{comment?.length || 0} {t('reviews_count')}</Text>
             </View>
 
             <View style={styles.ratingBarsContainer}>
@@ -552,11 +556,11 @@ const Produit = ({ route, navigation }) => {
                 const percentage = (comment?.length || 0) > 0 ? (count / comment.length) * 100 : 0;
                 return (
                   <View key={rating} style={styles.ratingBarRow}>
-                    <Text style={styles.ratingNumber}>{rating}</Text>
+                    <Text style={[styles.ratingNumber, { color: colors.text.secondary }]}>{rating}</Text>
                     <View style={styles.ratingBarBackground}>
-                      <View style={[styles.ratingBarFill, { width: `${percentage}%` }]} />
+                      <View style={[styles.ratingBarFill, { width: `${percentage}%`, backgroundColor: colors.primary }]} />
                     </View>
-                    <Text style={styles.ratingCount}>{count}</Text>
+                    <Text style={[styles.ratingCount, { color: colors.text.secondary }]}>{count}</Text>
                   </View>
                 );
               })}
@@ -564,15 +568,15 @@ const Produit = ({ route, navigation }) => {
           </View>
 
           <View style={styles.recentReviews}>
-            <Text style={styles.recentReviewsTitle}>Commentaires récents</Text>
+            <Text style={[styles.recentReviewsTitle, { color: colors.text.primary }]}>Commentaires récents</Text>
             {comment && Array.isArray(comment) && comment.length > 0 ? (
               <>
                 {comment.slice(0, 3).map((review, index) => (
-                  <View key={index} style={styles.reviewCard}>
+                  <View key={index} style={[styles.reviewCard, { backgroundColor: colors.surface }]}>
                     <View style={styles.reviewHeader}>
                       <View style={styles.reviewerInfo}>
-                        <Text style={styles.reviewerName}>{review?.nomUser || 'Utilisateur'}</Text>
-                        <Text style={styles.reviewDate}>
+                        <Text style={[styles.reviewerName, { color: colors.text.primary }]}>{review?.nomUser || 'Utilisateur'}</Text>
+                        <Text style={[styles.reviewDate, { color: colors.text.muted }]}>
                           {review?.heure?.seconds ? new Date(review.heure.seconds * 1000).toLocaleDateString() : new Date().toLocaleDateString()}
                         </Text>
                       </View>
@@ -585,14 +589,14 @@ const Produit = ({ route, navigation }) => {
                       </View>
                     </View>
                     <View>
-                      <Text style={styles.reviewText}>
+                      <Text style={[styles.reviewText, { color: colors.text.secondary }]}>
                         {expandedComments[index] || (review?.texte || '').length <= 100
                           ? (review?.texte || '')
                           : (review?.texte || '').slice(0, 100) + '...'}
                       </Text>
                       {(review?.texte || '').length > 100 && (
                         <TouchableOpacity onPress={() => toggleCommentExpansion(index)} style={styles.seeMoreButton}>
-                          <Text style={styles.seeMoreText}>
+                          <Text style={[styles.seeMoreText, { color: colors.primary }]}>
                             {expandedComments[index] ? 'Voir moins' : 'Voir plus'}
                           </Text>
                         </TouchableOpacity>
@@ -640,18 +644,18 @@ const Produit = ({ route, navigation }) => {
           </View>
         </View>
 
-        <View style={styles.similarBooksContainer}>
+        <View style={[styles.similarBooksContainer, { backgroundColor: colors.surface }]}>
           <View style={styles.similarBooksHeader}>
-            <Text style={styles.similarBooksTitle}>{t('similar_books')}</Text>
+            <Text style={[styles.similarBooksTitle, { color: colors.text.primary }]}>{t('similar_books')}</Text>
           </View>
           {loadingSimilar ? (
-            <ActivityIndicator size="large" color="#007BFF" style={styles.loader} />
+            <ActivityIndicator size="large" color={colors.primary} style={styles.loader} />
           ) : similarBooks.length > 0 ? (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.similarBookScroll}>
               {similarBooks.map((book, index) => (
                 <TouchableOpacity
                   key={index}
-                  style={styles.similarBookCard}
+                  style={[styles.similarBookCard, { borderColor: colors.border || '#e0e0e0', backgroundColor: colors.surface }]}
                   onPress={() => navigation.navigate('Produit', {
                     name: book.title,
                     cathegorie: book.category,
@@ -661,15 +665,15 @@ const Produit = ({ route, navigation }) => {
                   })}
                 >
                   <Image source={{ uri: book.image }} style={styles.similarBookImage} defaultSource={require('../../../assets/biblio/math.jpg')} />
-                  <View style={styles.similarBookInfo}>
-                    <Text style={styles.similarBookTitle} numberOfLines={2}>{book.title}</Text>
-                    <Text style={styles.similarBookCategory}>{book.category}</Text>
+                  <View style={[styles.similarBookInfo, { backgroundColor: colors.surface }]}>
+                    <Text style={[styles.similarBookTitle, { color: colors.text.primary }]} numberOfLines={2}>{book.title}</Text>
+                    <Text style={[styles.similarBookCategory, { color: colors.text.secondary }]}>{book.category}</Text>
                   </View>
                 </TouchableOpacity>
               ))}
             </ScrollView>
           ) : (
-            <Text style={styles.noSimilarBooks}>{t('no_similar_books')}</Text>
+            <Text style={[styles.noSimilarBooks, { color: colors.text.secondary }]}>{t('no_similar_books')}</Text>
           )}
         </View>
 
@@ -681,11 +685,11 @@ const Produit = ({ route, navigation }) => {
           keyboardVerticalOffset={Platform.OS === 'ios' ? 16 : 0}
           style={{ flex: 1 }}
         >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>{t('rate_modal_title')}</Text>
+          <View style={[styles.modalOverlay, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
+            <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
+              <Text style={[styles.modalTitle, { color: colors.text.primary }]}>{t('rate_modal_title')}</Text>
               <View style={styles.ratingInput}>
-                <Text style={styles.ratingLabel}>{t('rating_label')}</Text>
+                <Text style={[styles.ratingLabel, { color: colors.text.primary }]}>{t('rating_label')}</Text>
                 <View style={styles.starRatingContainer}>
                   {[1, 2, 3, 4, 5].map((rating) => (
                     <TouchableOpacity key={rating} onPress={() => setValuesNote(rating.toString())}>
@@ -694,13 +698,21 @@ const Produit = ({ route, navigation }) => {
                   ))}
                 </View>
               </View>
-              <TextInput style={styles.commentInput} placeholder={t('write_review_placeholder')} multiline numberOfLines={4} value={values} onChangeText={setValues} />
+              <TextInput
+                style={[styles.commentInput, { color: colors.text.primary, borderColor: colors.border || '#ddd', backgroundColor: colors.background }]}
+                placeholder={t('write_review_placeholder')}
+                placeholderTextColor={colors.text.muted}
+                multiline
+                numberOfLines={4}
+                value={values}
+                onChangeText={setValues}
+              />
               <View style={styles.modalButtons}>
-                <TouchableOpacity style={[styles.modalButton, styles.cancelButton]} onPress={() => { setModalComm(false); setValues(''); setValuesNote('0'); }}>
-                  <Text style={styles.cancelButtonText}>{t('cancel_btn')}</Text>
+                <TouchableOpacity style={[styles.modalButton, styles.cancelButton, { backgroundColor: colors.background }]} onPress={() => { setModalComm(false); setValues(''); setValuesNote('0'); }}>
+                  <Text style={[styles.cancelButtonText, { color: colors.text.secondary }]}>{t('cancel_btn')}</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={[styles.modalButton, styles.submitButton]} onPress={handleAddComment}>
-                  <Text style={styles.submitButtonText}>{t('submit_btn')}</Text>
+                <TouchableOpacity style={[styles.modalButton, styles.submitButton, { backgroundColor: colors.primary }]} onPress={handleAddComment}>
+                  <Text style={[styles.submitButtonText, { color: colors.text.white }]}>{t('submit_btn')}</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -710,13 +722,13 @@ const Produit = ({ route, navigation }) => {
 
       <Modal animationType='slide' transparent={true} visible={modalDescription} onRequestClose={() => setModalDescription(false)}>
         <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>{t('full_description')}</Text>
+          <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
+            <Text style={[styles.modalTitle, { color: colors.text.primary }]}>{t('full_description')}</Text>
             <ScrollView style={styles.modalScrollView}>
-              <Text style={styles.modalDescriptionText}>{bookDescription || t('no_description')}</Text>
+              <Text style={[styles.modalDescriptionText, { color: colors.text.primary }]}>{bookDescription || t('no_description')}</Text>
             </ScrollView>
-            <TouchableOpacity style={styles.modalCloseButton} onPress={() => setModalDescription(false)}>
-              <Text style={styles.modalCloseButtonText}>{t('close_btn')}</Text>
+            <TouchableOpacity style={[styles.modalCloseButton, { backgroundColor: colors.primary }]} onPress={() => setModalDescription(false)}>
+              <Text style={[styles.modalCloseButtonText, { color: colors.text.white }]}>{t('close_btn')}</Text>
             </TouchableOpacity>
           </View>
         </View>

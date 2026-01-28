@@ -16,10 +16,13 @@ import { db } from '../../firebaseConfig';
 import { UserContext } from '../context/UserContext';
 import { useTranslation } from '../hooks/useTranslation';
 import CustomHeader from './CustomHeader';
+import { useConfig } from '../context/ConfigContext';
 
 const { WIDTH, HEIGHT } = Dimensions.get('window');
 const ELearningPage = ({ navigation }) => {
     const { t } = useTranslation();
+    const { theme } = useConfig();
+    const colors = theme.colors;
     const { currentUserNewNav, datUser } = useContext(UserContext);
     const [allLivres, setAllLivres] = useState([]);
     const [allMemoires, setAllMemoires] = useState([]);
@@ -243,7 +246,7 @@ const ELearningPage = ({ navigation }) => {
                             <Ionicons
                                 name={activeTab === 'livres' ? 'book' : 'document-text'}
                                 size={24}
-                                color="#999"
+                                color={colors.text.light || '#999'}
                             />
                         </View>
                     )}
@@ -299,7 +302,7 @@ const ELearningPage = ({ navigation }) => {
                     onPress={() => setCurrentPage(Math.max(1, currentPage - 1))}
                     disabled={currentPage === 1}
                 >
-                    <Ionicons name="chevron-back" size={18} color={currentPage === 1 ? "#ccc" : "#007AFF"} />
+                    <Ionicons name="chevron-back" size={18} color={currentPage === 1 ? "#ccc" : colors.primary} />
                 </TouchableOpacity>
 
                 <Text style={styles.pageText}>
@@ -311,7 +314,7 @@ const ELearningPage = ({ navigation }) => {
                     onPress={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                     disabled={currentPage === totalPages}
                 >
-                    <Ionicons name="chevron-forward" size={18} color={currentPage === totalPages ? "#ccc" : "#007AFF"} />
+                    <Ionicons name="chevron-forward" size={18} color={currentPage === totalPages ? "#ccc" : colors.primary} />
                 </TouchableOpacity>
             </View>
         );
@@ -350,7 +353,7 @@ const ELearningPage = ({ navigation }) => {
                     style={styles.refreshButton}
                     onPress={loadAllData}
                 >
-                    <Ionicons name="refresh" size={22} color="#007AFF" />
+                    <Ionicons name="refresh" size={22} color={colors.primary} />
                 </TouchableOpacity>
             </View>
 
@@ -362,9 +365,9 @@ const ELearningPage = ({ navigation }) => {
 
             {/* Content */}
             {loading ? (
-                <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color="#007AFF" />
-                    <Text style={styles.loadingText}>{t('loading_data')}</Text>
+                <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+                    <ActivityIndicator size="large" color={colors.primary} />
+                    <Text style={[styles.loadingText, { color: colors.text.secondary }]}>{t('loading_data')}</Text>
                 </View>
             ) : (
                 <>
@@ -562,7 +565,7 @@ const styles = StyleSheet.create({
         marginBottom: 20,
     },
     loginButton: {
-        backgroundColor: '#007AFF',
+        backgroundColor: '#007AFF', // You might want this to be dynamic too if it's the login button
         paddingHorizontal: 24,
         paddingVertical: 12,
         borderRadius: 8,

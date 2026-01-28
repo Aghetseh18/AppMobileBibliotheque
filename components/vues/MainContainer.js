@@ -11,6 +11,7 @@ import { useUnreadChatCount } from '../utils/chat';
 import { useNotificationCount } from '../hooks/useNotificationCount';
 import { useTranslation } from '../hooks/useTranslation';
 import useOrgLogo from '../hooks/useOrgLogo';
+import { useConfig } from '../context/ConfigContext';
 
 
 //Screens
@@ -56,6 +57,8 @@ const Tab = createBottomTabNavigator();
 
 const MainContainer = ({ navigation, route }) => {
   const { t } = useTranslation();
+  const { theme } = useConfig();
+  const colors = theme.colors;
   const { emailHigh, currentUserNewNav } = useContext(UserContext);
   const { logoUrl } = useOrgLogo();
   const cartCount = useCartCount(currentUserNewNav?.email);
@@ -104,8 +107,16 @@ const MainContainer = ({ navigation, route }) => {
 
       return <Ionicons name={iconName} size={size} color={color} />;
     },
-    tabBarActiveTintColor: '#FF8A50',
-    tabBarInactiveTintColor: 'gray',
+    tabBarActiveTintColor: colors.primary,
+    tabBarInactiveTintColor: colors.text?.secondary || 'gray',
+    tabBarStyle: {
+      backgroundColor: colors.surface || '#FFF',
+      borderTopColor: colors.border || 'transparent',
+    },
+    headerStyle: {
+      backgroundColor: colors.primary,
+    },
+    headerTintColor: '#FFF',
   });
 
   const voirMessage = () => {
